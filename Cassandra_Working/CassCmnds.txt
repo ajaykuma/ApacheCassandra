@@ -1,0 +1,464 @@
+==========================================================================
+Working with NODETOOL
+ubuntu@ds201-node1:~/node/bin$ ./nodetool help
+usage: nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
+        [(-u <username> | --username <username>)]
+        [(-pw <password> | --password <password>)]
+        [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)] <command>
+        [<args>]
+
+The most commonly used nodetool commands are:
+    abortrebuild                 Abort a currently running rebuild operation. Currently active streams will finish but no new streams will be started.
+    assassinate                  Forcefully remove a dead node without re-replicating any data.  Use as a last resort if you cannot removenode
+    bootstrap                    Monitor/manage node's bootstrap process
+    cleanup                      Triggers the immediate cleanup of keys no longer belonging to a node. By default, clean all keyspaces
+    clearsnapshot                Remove the snapshot with the given name from the given keyspaces. If no snapshotName is specified we will remove all snapshots
+    compact                      Force a (major) compaction on one or more tables or user-defined compaction on given SSTables
+    compactionhistory            Print history of compaction
+    compactionstats              Print statistics on compactions
+    decommission                 Decommission the *node I am connecting to*
+    describecluster              Print the name, snitch, partitioner and schema version of a cluster
+    describering                 Shows the token ranges info of a given keyspace
+    disableautocompaction        Disable autocompaction for the given keyspace and table
+    disablebackup                Disable incremental backup
+    disablebinary                Disable native transport (binary protocol)
+    disablegossip                Disable gossip (effectively marking the node down)
+    disablehandoff               Disable storing hinted handoffs
+    disablehintsfordc            Disable hints for a data center
+    drain                        Drain the node (stop accepting writes and flush all tables)
+    enableautocompaction         Enable autocompaction for the given keyspace and table
+    enablebackup                 Enable incremental backup
+    enablebinary                 Reenable native transport (binary protocol)
+    enablegossip                 Reenable gossip
+    enablehandoff                Reenable future hints storing on the current node
+    enablehintsfordc             Enable hints for a data center that was previsouly disabled
+    failuredetector              Shows the failure detector information for the cluster
+    flush                        Flush one or more tables
+    garbagecollect               Remove deleted data from one or more tables
+    gcstats                      Print GC Statistics
+    getbatchlogreplaythrottle    Print batchlog replay throttle in KB/s. This is reduced proportionally to the number of nodes in the cluster.
+    getcompactionthreshold       Print min and max compaction thresholds for a given table
+    getcompactionthroughput      Print the MB/s throughput cap for compaction in the system
+    getconcurrentcompactors      Get the number of concurrent compactors in the system.
+    getconcurrentviewbuilders    Get the number of concurrent view builders in the system
+    getendpoints                 Print the end points that owns the key
+    getinterdcstreamthroughput   Print the Mb/s throughput cap for inter-datacenter streaming in the system
+    getlogginglevels             Get the runtime logging levels
+    getmaxhintwindow             Print the max hint window in ms
+    getseeds                     Get the currently in use seed node IP list excluding the node IP
+    getsstables                  Print the sstable filenames that own the key
+    getstreamthroughput          Print the Mb/s throughput cap for streaming in the system
+    gettimeout                   Print the timeout of the given type in ms
+    gettraceprobability          Print the current trace probability value
+    gossipinfo                   Shows the gossip information for the cluster
+    handoffwindow                Print current hinted handoff window
+    help                         Display help information
+    info                         Print node information (uptime, load, ...)
+    inmemorystatus               Returns a list of the in-memory tables for this node and the amount of memory each table is using, or information about a single table if the keyspace and columnfamily are given.
+    invalidatecountercache       Invalidate the counter cache
+    invalidatekeycache           Invalidate the key cache
+    invalidaterowcache           Invalidate the row cache
+    join                         Join the ring
+    listsnapshots                Lists all the snapshots along with the size on disk and true size.
+    mark_unrepaired              Mark all SSTables of a table or keyspace as unrepaired. Use when no longer running incremental repair on a table or keyspace.
+    move                         Move node on the token ring to a new token
+    netstats                     Print network information on provided host (connecting node by default)
+    nodesyncservice              Manage the NodeSync service on the connected node
+    pausehandoff                 Pause hints delivery process
+    proxyhistograms              Print statistic histograms for network operations
+    rangekeysample               Shows the sampled keys held across all keyspaces
+    rebuild                      Rebuild data by streaming from other nodes (similarly to bootstrap)
+    rebuild_index                A full rebuild of native secondary indexes for a given table
+    refresh                      Load newly placed SSTables to the system without restart
+    refreshsizeestimates         Refresh system.size_estimates
+    reloadlocalschema            Reload local node schema from system tables
+    reloadseeds                  Reload the seed node list from the seed node provider
+    reloadtriggers               Reload trigger classes
+    relocatesstables             Relocates sstables to the correct disk
+    removenode                   Show status of current node removal, force completion of pending removal or remove provided ID
+    repair                       Repair one or more tables
+    repair_admin                 list and fail incremental repair sessions
+    replaybatchlog               Kick off batchlog replay and wait for finish
+    resetlocalschema             Reset node's local schema and resync
+    resumehandoff                Resume hints delivery process
+    ring                         Print information about the token ring
+    scrub                        Scrub (rebuild sstables for) one or more tables
+    sequence                     Run multiple nodetool commands from a file, resource or stdin in sequence. Common options (host, port, username, password) are passed to child commands.
+    setbatchlogreplaythrottle    Set batchlog replay throttle in KB per second, or 0 to disable throttling. This will be reduced proportionally to the number of nodes in the cluster.
+    setcachecapacity             Set global key, row, and counter cache capacities (in MB units)
+    setcachekeystosave           Set number of keys saved by each cache for faster post-restart warmup. 0 to disable
+    setcompactionthreshold       Set min and max compaction thresholds for a given table
+    setcompactionthroughput      Set the MB/s throughput cap for compaction in the system, or 0 to disable throttling
+    setconcurrentcompactors      Set number of concurrent compactors in the system.
+    setconcurrentviewbuilders    Set the number of concurrent view builders in the system
+    sethintedhandoffthrottlekb   Set hinted handoff throttle in kb per second, per delivery thread.
+    setinterdcstreamthroughput   Set the Mb/s throughput cap for inter-datacenter streaming in the system, or 0 to disable throttling
+    setlogginglevel              Set the log level threshold for a given component or class. Will reset to the initial configuration if called with no parameters.
+    setmaxhintwindow             Set the specified max hint window in ms
+    setstreamthroughput          Set the Mb/s throughput cap for streaming in the system, or 0 to disable throttling
+    settimeout                   Set the specified timeout in ms, or 0 to disable timeout
+    settraceprobability          Sets the probability for tracing any given request to value. 0 disables, 1 enables for all requests, 0 is the default
+    sjk                          Run commands of 'Swiss Java Knife'. Run 'nodetool sjk --help' for more information.
+    snapshot                     Take a snapshot of specified keyspaces or a snapshot of the specified table
+    status                       Print cluster information (state, load, IDs, ...)
+    statusautocompaction         status of autocompaction of the given keyspace and table
+    statusbackup                 Status of incremental backup
+    statusbinary                 Status of native transport (binary protocol)
+    statusgossip                 Status of gossip
+    statushandoff                Status of storing future hints on the current node
+    stop                         Stop compaction
+    stopdaemon                   Stop cassandra daemon
+    tablehistograms              Print statistic histograms for a given table
+    tablestats                   Print statistics on tables
+    toppartitions                Sample and print the most active partitions for a given column family
+    tpstats                      Print usage statistics of thread pools
+    truncatehints                Truncate all hints on the local node, or truncate hints for the endpoint(s) specified.
+    upgradesstables              Rewrite sstables (for the requested tables) that are not on the current version (thus upgrading them to said current version)
+    verify                       Verify (check data checksum for) one or more tables
+    version                      Print cassandra version
+    viewbuildstatus              Show progress of a materialized view build
+
+See 'nodetool help <command>' for more information on a specific command.
+
+===========
+#Apache Cassandra
+#nodetool status
+The status command shows information about the entire cluster, particularly the state of each
+node, and information about each of those nodes: IP address, data load, number of tokens,total percentage of data saved on each node, host ID, and datacenter and rack.
+
+ubuntu@ds201-node1:~/node/bin$ ./nodetool status
+Datacenter: Cassandra
+
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address    Load       Owns    Host ID                               Token                                    Rack
+UN  127.0.0.1  205.63 KiB  ?       971960f1-2598-455d-a451-c8808497204b  0                                        rack1
+
+Note: Non-system keyspaces don't have the same replication settings, effective ownership information is meaningless
+
+#Datastax enterprise
+ubuntu@ds201-node1:~/node/bin$ ./dsetool status
+DC: Cassandra       Workload: Cassandra       Graph: no     
+======================================================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--   Address          Load             Owns                 Token                                        Rack         Health [0,1] 
+UN   127.0.0.1        205.63 KiB       ?                    0                                            rack1        0.00         
+
+Note: you must specify a keyspace to get ownership information.
+Take note as to the differences between dsetool status and nodetool status. Although
+both tools have a status command, dsetool works with DataStax EnterpriseTM as a whole
+(Apache CassandraTM, Apache SparkTM, Apache SolrTM, Graph) whereas nodetool is specific to
+Apache CassandraTM.
+============
+
+#nodetool info
+ubuntu@ds201-node1:~/node/bin$ ./nodetool info
+ID                     : 971960f1-2598-455d-a451-c8808497204b
+Gossip active          : true
+Native Transport active: true
+Load                   : 205.63 KiB
+Generation No          : 1590491970
+Uptime (seconds)       : 380
+Heap Memory (MB)       : 311.50 / 512.00
+Off Heap Memory (MB)   : 0.00
+Data Center            : Cassandra
+Rack                   : rack1
+Exceptions             : 0
+Key Cache              : entries 0, size 0 bytes, capacity 25 MiB, 0 hits, 0 requests, NaN recent hit rate, 14400 save period in seconds
+Row Cache              : entries 0, size 0 bytes, capacity 0 bytes, 0 hits, 0 requests, NaN recent hit rate, 0 save period in seconds
+Counter Cache          : entries 0, size 0 bytes, capacity 12 MiB, 0 hits, 0 requests, NaN recent hit rate, 7200 save period in seconds
+Chunk Cache            : entries 123, size 3.29 MiB, capacity 1.48 GiB, 123 misses, 911 requests, 0.865 recent hit rate, 1188.230 microseconds miss latency
+Percent Repaired       : 100.0%
+Token                  : 0
+
+The info command displays information about the connected node, which includes token
+information, host ID, protocol status, data load, node uptime, heap memory usage and
+capacity, datacenter and rack information, number of errors reported, cache usage, and
+percentage of SSTables that have been incrementally repaired.
+======================
+nodetool ring
+=====================
+#nodetool describecluster
+ubuntu@ds201-node1:~/node/bin$ ./nodetool describecluster
+Cluster Information:
+	Name: Test Cluster
+	Snitch: com.datastax.bdp.snitch.DseDelegateSnitch
+	DynamicEndPointSnitch: enabled
+	Partitioner: org.apache.cassandra.dht.Murmur3Partitioner
+	Schema versions:
+		e8ff6427-6a12-35a2-ba5c-7d1c1e9e98a6: [127.0.0.1]
+
+describecluster shows the settings that are common across all of the nodes in the cluster
+and the current schema version used by each node.
+=====================
+ubuntu@ds201-node1:~/node/bin$ ./nodetool getlogginglevels
+
+Logger Name                                        Log Level
+ROOT                                                    INFO
+DroppedAuditEventLogger                                 INFO
+SLF4JAuditWriter                                        INFO
+com.cryptsoft                                            OFF
+com.datastax.bdp.db                                    DEBUG
+com.datastax.bdp.search.solr.metrics.SolrMetricsEventListener     DEBUG
+com.datastax.driver.core.NettyUtil                     ERROR
+org.apache.cassandra                                   DEBUG
+org.apache.lucene.index                                 INFO
+org.apache.solr.core.CassandraSolrConfig                WARN
+org.apache.solr.core.RequestHandlers                    WARN
+org.apache.solr.core.SolrCore                           WARN
+org.apache.solr.handler.component                       WARN
+org.apache.solr.search.SolrIndexSearcher                WARN
+org.apache.solr.update                                  WARN
+org.apache.spark.rpc                                   ERROR
+
+====================
+./nodetool setlogginglevel org.apache.cassandra TRACE
+The command setlogginglevel dynamically changes the logging level used by
+Apache CassandraTM without the need for a restart. You can also look at the
+/var/log/cassandra/system.log afterwards to observe the changes.
+
+===================
+./nodetool settraceprobability 0.1
+The resultant value from the settraceprobability command represents a decimal
+describing the percentage of queries being saved, starting from 0 (0%) to 1 (100%). Saved traces
+can then be viewed in the system_traces keyspace.
+
+==================
+./nodetool drain
+The drain command stops writes from occurring on the node and flushes all data to disk.
+Typically, this command may be run before stopping an Apache CassandraTM node.
+
+==================
+/nodetool stopdaemon
+The stopdaemon command stops a node's execution. Wait for it to complete.
+12) Restart your node by running:
+/home/ubuntu/node/bin/dse cassandra
+Wait for Apache CassandraTM to start before continuing.
+
+==================
+nodetool gossipinfo
+nodetool gettimeout read
+nodetool gettimeout write
+nodetool version
+==============
+We will now stress the node using a simple tool called Apache Cassandra(TM) Stress. 
+Once your node has restarted, navigate to the
+/home/ubuntu/node/resources/cassandra/tools/bin directory in the terminal. 
+
+Run cassandra-stress to populate the cluster with 50,000 partitions using 1 client thread and
+without any warmup using:
+./cassandra-stress write n=50000 no-warmup -rate threads=1
+
+=====
+ubuntu@ds201-node1:~/node/resources/cassandra/tools/bin$ ./cassandra-stress write n=50000 no-warmup -rate threads=1
+******************** Stress Settings ********************
+Command:
+  Type: write
+  Count: 50,000
+  No Warmup: true
+  Consistency Level: LOCAL_ONE
+  Target Uncertainty: not applicable
+  Key Size (bytes): 10
+  Counter Increment Distibution: add=fixed(1)
+Rate:
+  Auto: false
+  Thread Count: 1
+  OpsPer Sec: 0
+Population:
+  Sequence: 1..50000
+  Order: ARBITRARY
+  Wrap: true
+Insert:
+  Revisits: Uniform:  min=1,max=1000000
+  Visits: Fixed:  key=1
+  Row Population Ratio: Ratio: divisor=1.000000;delegate=Fixed:  key=1
+  Batch Type: not batching
+Columns:
+  Max Columns Per Key: 5
+  Column Names: [C0, C1, C2, C3, C4]
+  Comparator: AsciiType
+  Timestamp: null
+  Variable Column Count: false
+  Slice: false
+  Size Distribution: Fixed:  key=34
+  Count Distribution: Fixed:  key=5
+Errors:
+  Ignore: false
+  Tries: 10
+Log:
+  No Summary: false
+  No Settings: false
+  No Progress: false
+  Show Queries: false
+  Query Log File: null
+  File: null
+  Interval Millis: 1000
+  Level: NORMAL
+Mode:
+  API: JAVA_DRIVER_NATIVE
+  Connection Style: CQL_PREPARED
+  CQL Version: CQL3
+  Protocol Version: DSE_V2
+  Username: null
+  Password: null
+  Auth Provide Class: null
+  Max Pending Per Connection: 128
+  Connections Per Host: 8
+  Compression: NONE
+Node:
+  Nodes: [localhost]
+  Is White List: false
+  Datacenter: null
+Schema:
+  Keyspace: keyspace1
+  Replication Strategy: org.apache.cassandra.locator.SimpleStrategy
+  Replication Strategy Options: {replication_factor=1}
+  Table Compression: null
+  Table Compaction Strategy: null
+  Table Compaction Strategy Options: {}
+Transport:
+  truststore=null; truststore-password=null; keystore=null; keystore-password=null; ssl-protocol=TLS; ssl-alg=SunX509; ssl-ciphers=TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA; 
+Port:
+  Native Port: 9042
+  JMX Port: 7199
+Send To Daemon:
+  *not set*
+Graph:
+  File: null
+  Revision: unknown
+  Title: null
+  Operation: WRITE
+TokenRange:
+  Wrap: true
+  Split Factor: 1
+
+Connected to cluster: Test Cluster, max pending requests per connection 128, max connections per host 8
+Datacenter: Cassandra; Host: localhost/127.0.0.1; Rack: rack1
+Created keyspaces. Sleeping 1s for propagation.
+Sleeping 2s...
+Running WRITE with 1 threads for 50000 iteration
+type       total ops,    op/s,    pk/s,   row/s,    mean,     med,     .95,     .99,    .999,     max,   time,   stderr, errors,  gc: #,  max ms,  sum ms,  sdv ms,      mb
+total,             3,       3,       3,       3,  16.900,   4.760,  41.943,  41.943,   41.94,    41.9,    1.0,  0.00000,      0,      0,       0,       0,       0,       0
+total,           330,     327,     327,     327,   2.908,   2.019,   7.688,  14.180,   27.08,    27.1,    2.0,  0.69405,      0,      0,       0,       0,       0,       0
+total,           788,     458,     458,     458,   2.131,   1.417,   6.533,  10.568,   19.71,    19.7,    3.0,  0.41955,      0,      0,       0,       0,       0,       0
+total,          1227,     439,     439,     439,   2.224,   1.574,   5.616,  11.534,   23.59,    23.6,    4.0,  0.29681,      0,      0,       0,       0,       0,       0
+total,          1925,     698,     698,     698,   1.402,   0.864,   3.715,   8.360,   13.97,    18.7,    5.0,  0.26179,      0,      0,       0,       0,       0,       0
+total,          3176,    1251,    1251,    1251,   0.780,   0.432,   2.198,   5.415,   10.72,    11.2,    6.0,  0.29324,      0,      0,       0,       0,       0,       0
+total,          3824,     648,     648,     648,   1.502,   0.961,   3.080,   9.429,   11.90,    12.3,    7.0,  0.24536,      0,      0,       0,       0,       0,       0
+total,          4215,     391,     391,     391,   2.520,   1.904,   7.123,  12.091,   59.44,    59.4,    8.0,  0.22374,      0,      1,      46,      46,       0,     303
+total,          4687,     472,     472,     472,   2.087,   1.582,   4.952,  10.478,   38.67,    38.7,    9.0,  0.20104,      0,      0,       0,       0,       0,       0
+total,          5688,    1001,    1001,    1001,   0.981,   0.917,   2.392,   4.182,    8.12,    10.6,   10.0,  0.18353,      0,      0,       0,       0,       0,       0
+total,          6316,     628,     628,     628,   1.559,   0.871,   4.727,   6.951,   13.64,    16.7,   11.0,  0.16557,      0,      0,       0,       0,       0,       0
+total,          6864,     548,     548,     548,   1.768,   0.915,   5.894,  14.565,   30.82,    35.2,   12.0,  0.15218,      0,      0,       0,       0,       0,       0
+total,          8091,    1227,    1227,    1227,   0.778,   0.400,   2.361,   5.087,   23.77,    25.6,   13.0,  0.15095,      0,      0,       0,       0,       0,       0
+total,          9321,    1230,    1230,    1230,   0.790,   0.446,   2.441,   4.977,   11.36,    23.6,   14.0,  0.14537,      0,      0,       0,       0,       0,       0
+total,         10776,    1455,    1455,    1455,   0.655,   0.244,   2.445,   5.657,   19.09,    39.7,   15.0,  0.14511,      0,      0,       0,       0,       0,       0
+total,         11274,     498,     498,     498,   1.973,   1.487,   5.231,   7.983,   18.07,    18.1,   16.0,  0.14006,      0,      0,       0,       0,       0,       0
+total,         12430,    1156,    1156,    1156,   0.845,   0.477,   2.798,   6.423,   11.51,    12.3,   17.0,  0.13169,      0,      0,       0,       0,       0,       0
+total,         15875,    3445,    3445,    3445,   0.280,   0.232,   0.500,   1.070,    4.19,     5.3,   18.0,  0.19307,      0,      0,       0,       0,       0,       0
+total,         17558,    1683,    1683,    1683,   0.572,   0.517,   0.693,   1.819,    4.88,     6.1,   19.0,  0.18005,      0,      0,       0,       0,       0,       0
+total,         20398,    2840,    2840,    2840,   0.339,   0.237,   0.579,   1.198,    4.26,    11.6,   20.0,  0.17971,      0,      0,       0,       0,       0,       0
+total,         22715,    2317,    2317,    2317,   0.416,   0.187,   1.893,   3.858,   13.31,    39.3,   21.0,  0.17109,      0,      0,       0,       0,       0,       0
+total,         25254,    2539,    2539,    2539,   0.381,   0.338,   0.492,   1.017,    7.08,    55.6,   22.0,  0.16459,      0,      1,      48,      48,       0,     267
+total,         27363,    2109,    2109,    2109,   0.458,   0.363,   0.753,   1.214,    4.81,     5.6,   23.0,  0.15566,      0,      0,       0,       0,       0,       0
+total,         28623,    1260,    1260,    1260,   0.766,   0.511,   1.226,   5.845,   25.21,    33.2,   24.0,  0.14876,      0,      0,       0,       0,       0,       0
+total,         31320,    2697,    2697,    2697,   0.356,   0.214,   0.867,   2.984,    6.54,     9.7,   25.0,  0.14367,      0,      0,       0,       0,       0,       0
+total,         33020,    1700,    1700,    1700,   0.568,   0.373,   2.781,   3.901,    7.43,     9.5,   26.0,  0.13695,      0,      0,       0,       0,       0,       0
+total,         34033,    1013,    1013,    1013,   0.950,   0.531,   2.333,   6.562,   25.76,    89.9,   27.0,  0.13267,      0,      0,       0,       0,       0,       0
+total,         35097,    1064,    1064,    1064,   0.919,   0.301,   1.983,   7.754,   39.91,    51.7,   28.0,  0.12862,      0,      0,       0,       0,       0,       0
+total,         38273,    3176,    3176,    3176,   0.298,   0.192,   0.705,   1.630,    8.33,    16.1,   29.0,  0.12769,      0,      0,       0,       0,       0,       0
+total,         40310,    2037,    2037,    2037,   0.467,   0.403,   0.563,   2.003,    7.98,    11.2,   30.0,  0.12249,      0,      0,       0,       0,       0,       0
+total,         44625,    4315,    4315,    4315,   0.218,   0.167,   0.440,   0.582,    4.03,    27.5,   31.0,  0.12876,      0,      1,      24,      24,       0,     294
+total,         49500,    4875,    4875,    4875,   0.193,   0.167,   0.255,   0.947,    3.53,     5.6,   32.0,  0.13406,      0,      0,       0,       0,       0,       0
+total,         50000,    3979,    3979,    3979,   0.239,   0.173,   0.357,   2.093,    4.08,     4.1,   32.1,  0.13210,      0,      0,       0,       0,       0,       0
+
+
+Results:
+Op rate                   :    1,556 op/s  [WRITE: 1,556 op/s]
+Partition rate            :    1,556 pk/s  [WRITE: 1,556 pk/s]
+Row rate                  :    1,556 row/s [WRITE: 1,556 row/s]
+Latency mean              :  0.603 ms [WRITE: 0.6 ms]
+Latency median            :  0.303 ms [WRITE: 0.3 ms]
+Latency 95th percentile   :  2.041 ms [WRITE: 2.0 ms]
+Latency 99th percentile   :  4.977 ms [WRITE: 5.0 ms]
+Latency 99.9th percentile : 13.967 ms [WRITE: 14.0 ms]
+Latency max               : 89.915 ms [WRITE: 89.9 ms]
+Total partitions          :     50,000 [WRITE: 50,000]
+Total errors              :          0 [WRITE: 0]
+Total GC count            : 3
+Total GC memory           : 863.249 MiB
+Total GC time             :    0.1 seconds
+Avg GC time               :   39.3 ms
+StdDev GC time            :   10.9 ms
+Total operation time      : 00:00:32
+
+END
+
+=====
+Initially, we will see a long list of setting for the stress run. As Apache CassandraTM stress
+executes, it logs several statistics to the terminal. Each line displays the statistics for the
+operations that occurred each second and shows number of partitions written, operations per
+second, latency information, and more.
+
+Navigate back to /home/ubuntu/node/resources/cassandra/bin and run:
+./nodetool flush
+The flush command commits all written (memtable, discussed later) data to disk. Unlike
+drain, flush allows further writes to occur.
+
+Check the new load on the node. Run:./nodetool status
+===========
+ubuntu@ds201-node1:~/node/resources/cassandra/bin$ ./nodetool flush
+ubuntu@ds201-node1:~/node/resources/cassandra/bin$ ./nodetool status
+Datacenter: Cassandra
+
+=====================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address    Load       Owns    Host ID                               Token                                    Rack
+UN  127.0.0.1  11.61 MiB  ?       971960f1-2598-455d-a451-c8808497204b  0                                        rack1
+
+Note: Non-system keyspaces don't have the same replication settings, effective ownership information is meaningless
+=====================
+
+We will now examine the data cassandra-stress wrote to our node. Start ./cqlsh.
+Execute the following CQLSH command to view the current keyspaces:
+DESCRIBE KEYSPACES;
+Notice the presence of keyspace1 which cassandra-stress created.
+
+Switch to that keyspace by executing the following:
+USE keyspace1;
+
+View the tables in keyspace1 by executing the following:
+DESCRIBE TABLES;
+
+Query the first five rows from standard1 by executing the following query:
+SELECT *
+FROM standard1
+LIMIT 5;
+The data that was written is not very meaningful, since they are all arbitrary BLOB values.
+
+========
+cqlsh> describe keyspaces;
+
+dse_system_local  system_schema  dse_leases          system_traces  dse_system
+dse_security      system_auth    keyspace1           dse_perf     
+solr_admin        system         system_distributed  killrvideo   
+
+cqlsh> use keyspace1;
+cqlsh:keyspace1> describe tables;
+
+counter1  standard1
+
+cqlsh:keyspace1> select * from standard1 limit 5;
+
+ key                    | C0                                                                     | C1                                                                     | C2                                                                     | C3                                                                     | C4
+------------------------+------------------------------------------------------------------------+------------------------------------------------------------------------+------------------------------------------------------------------------+------------------------------------------------------------------------+------------------------------------------------------------------------
+ 0x35384d4d334f39355030 | 0x2b021ed2ca95d8d6d450774953900af7226f692a1951fbb58099d51b54b9975a0022 | 0x3411457464d3cd9c716cad05cfc4a8a9556db308ec450e80afac7cbb2ee7a2e1040f | 0xb0b01f5612908837eeaaab017ec6f2cc988989916c02038e813f2b2811e2e5ffde35 | 0x7e7e764b144db561aa6722b593fb872cb41126362eebeeb233ba0dd97b9c761807ab | 0xb601e0fbd8b342baaae29bd469a24c906d960d36e80c5ddf2253b91335453833eec0
+ 0x314d324d31374b393431 | 0x1deda456d4ebf65ffe2cf623e8592d5621d9c83430add55fe2ac5cad67689ea54692 | 0x5f5b73a37e538de3bd766072e1032566bfa365c54d165745d8e81bb68fd6c1e0b70d | 0xa90f84cffb8601404d4be21c7d0f95da832b853852d112234803457ca87d59d96e4f | 0x612a8888062268cb811adbb591b4f9e7dceacad7c38c90af38d0e8501d76e26cab23 | 0xe50417a72c78b64e3ca433471b91b16651c25870fdc93b673552ce65da51480ddf6c
+ 0x33344b50353133365030 | 0xd34820f1e930d9257e02158146c64ea6b052903710919294f196c174591318a00c1a | 0x6becf1098ae914e65c0325081a8a4418f9d65575a831db087102140b8b52db166ef0 | 0x34b89becc7ae1d391e814edc105e7f7e5efa495e2ad4850a753bc5236902f6380690 | 0x02e517fcc81da646fc7ba6f9f5dd88a4012e33e977d055a4ea50a7c25da9ba19f6ea | 0x5692948b8be2c35ed8af2e40135e26fddb7af2f425374cf835622e20a74cf3655e80
+ 0x324d4f3031314c303330 | 0xc6d16d17a30611dc7646de3463be469dc56130a24345063854c356853a9966be1f01 | 0xbfdd8fd17ec738056feb9c176f64c5f0532b672dc398cd6d3470f05fc3aae437d990 | 0xc1cc57455dfa0cc0dd595accfa3751f6d5edac2e11b4e763ea88ca2b7f45ec77ab8d | 0x7998ea0ed12980933317b639d9b92ee20d0e6d66b1a531bd75c2c367aeeee47b73d4 | 0x9142cb1c0668c414c25eb264e52752f5e2cd86f3b15b3c5f5d8413f88fbcffbda7d2
+ 0x30303138344f4e503530 | 0x37e76a8c71afc1adda7958aa1182c5c100f120d91ced0323f3cc5090319fda464bf3 | 0x1a3a594716dc09025772fcf56724177110faa26f24e66a38cae64be7a568a182b9c9 | 0xcae650315e85148d46c91c857bc8a87e767fdb6e0450bee503f556bc1999a1dfeab5 | 0x6b48adf2bc3f36e8a1adb1314f41f28f0fbb69d2551f0b0e650f6595097af61c99a1 | 0xf8f02decf64b8889cbd28a01080b368849f065889b5de4addd73dc78c4343872a5c0
+
+(5 rows)
+==============
