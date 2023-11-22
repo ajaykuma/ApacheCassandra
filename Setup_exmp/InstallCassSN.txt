@@ -79,11 +79,18 @@ export CQLSH_NO_BUNDLED=true(optionally you can set this in .bashrc of your user
 
 ===============================================================================
 #Installation from binary tarball files
-#Download the latest stable release from the Apache Cassandra downloads website.
-#Downloaded 3.0.16 released on 2018-02-19 from link http://www.apache.org/dyn/closer.lua/cassandra/3.0.16/apache-cassandra-3.0.16-bin.tar.gz
+#Download the latest stable release from the Apache Cassandra downloads website or from archive.apache.org/dist/
+#Downloaded apache-cassandra-4.1.2-bin.tar.gz 
 #untar it in your preferred location, I did it in /usr/local
+while logged in as hdu user
+
+cd /usr/local
+sudo tar -xvf /home/hdu/Downloads/apache-cassandra-4.1.2-bin.tar.gz
+
 #create a link to the directory
-sudo ln -s apache-cassandra-3.0.16-bin cassandra
+sudo ln -s apache-cassandra-4.1.2 cassandra
+sudo chown -R hdu:hdu apache-cassandra-4.1.2
+sudo chown -R hdu:hdu cassandra 
 
 #change ownership to root/preferred user
 #update .bashrc with cassandra path (for user that you will use to launch cassandra)
