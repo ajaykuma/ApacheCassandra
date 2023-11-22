@@ -1,3 +1,4 @@
+#Setting up single node cluster
 Prepare machine instructions:
 
 ifconfig --- to check ipaddress

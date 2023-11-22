@@ -1,124 +1,16 @@
 ==========================================================================
 Working with NODETOOL
-ubuntu@ds201-node1:~/node/bin$ ./nodetool help
-usage: nodetool [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
-        [(-u <username> | --username <username>)]
-        [(-pw <password> | --password <password>)]
+
+See 'nodetool help <command>' for more information on a specific command.
+hdu@mh2:~$ nodetool help
+usage: nodetool [(-u <username> | --username <username>)]
+        [(-pw <password> | --password <password>)] [(-pp | --print-port)]
+        [(-h <host> | --host <host>)] [(-p <port> | --port <port>)]
         [(-pwf <passwordFilePath> | --password-file <passwordFilePath>)] <command>
         [<args>]
 
 The most commonly used nodetool commands are:
-    abortrebuild                 Abort a currently running rebuild operation. Currently active streams will finish but no new streams will be started.
-    assassinate                  Forcefully remove a dead node without re-replicating any data.  Use as a last resort if you cannot removenode
-    bootstrap                    Monitor/manage node's bootstrap process
-    cleanup                      Triggers the immediate cleanup of keys no longer belonging to a node. By default, clean all keyspaces
-    clearsnapshot                Remove the snapshot with the given name from the given keyspaces. If no snapshotName is specified we will remove all snapshots
-    compact                      Force a (major) compaction on one or more tables or user-defined compaction on given SSTables
-    compactionhistory            Print history of compaction
-    compactionstats              Print statistics on compactions
-    decommission                 Decommission the *node I am connecting to*
-    describecluster              Print the name, snitch, partitioner and schema version of a cluster
-    describering                 Shows the token ranges info of a given keyspace
-    disableautocompaction        Disable autocompaction for the given keyspace and table
-    disablebackup                Disable incremental backup
-    disablebinary                Disable native transport (binary protocol)
-    disablegossip                Disable gossip (effectively marking the node down)
-    disablehandoff               Disable storing hinted handoffs
-    disablehintsfordc            Disable hints for a data center
-    drain                        Drain the node (stop accepting writes and flush all tables)
-    enableautocompaction         Enable autocompaction for the given keyspace and table
-    enablebackup                 Enable incremental backup
-    enablebinary                 Reenable native transport (binary protocol)
-    enablegossip                 Reenable gossip
-    enablehandoff                Reenable future hints storing on the current node
-    enablehintsfordc             Enable hints for a data center that was previsouly disabled
-    failuredetector              Shows the failure detector information for the cluster
-    flush                        Flush one or more tables
-    garbagecollect               Remove deleted data from one or more tables
-    gcstats                      Print GC Statistics
-    getbatchlogreplaythrottle    Print batchlog replay throttle in KB/s. This is reduced proportionally to the number of nodes in the cluster.
-    getcompactionthreshold       Print min and max compaction thresholds for a given table
-    getcompactionthroughput      Print the MB/s throughput cap for compaction in the system
-    getconcurrentcompactors      Get the number of concurrent compactors in the system.
-    getconcurrentviewbuilders    Get the number of concurrent view builders in the system
-    getendpoints                 Print the end points that owns the key
-    getinterdcstreamthroughput   Print the Mb/s throughput cap for inter-datacenter streaming in the system
-    getlogginglevels             Get the runtime logging levels
-    getmaxhintwindow             Print the max hint window in ms
-    getseeds                     Get the currently in use seed node IP list excluding the node IP
-    getsstables                  Print the sstable filenames that own the key
-    getstreamthroughput          Print the Mb/s throughput cap for streaming in the system
-    gettimeout                   Print the timeout of the given type in ms
-    gettraceprobability          Print the current trace probability value
-    gossipinfo                   Shows the gossip information for the cluster
-    handoffwindow                Print current hinted handoff window
-    help                         Display help information
-    info                         Print node information (uptime, load, ...)
-    inmemorystatus               Returns a list of the in-memory tables for this node and the amount of memory each table is using, or information about a single table if the keyspace and columnfamily are given.
-    invalidatecountercache       Invalidate the counter cache
-    invalidatekeycache           Invalidate the key cache
-    invalidaterowcache           Invalidate the row cache
-    join                         Join the ring
-    listsnapshots                Lists all the snapshots along with the size on disk and true size.
-    mark_unrepaired              Mark all SSTables of a table or keyspace as unrepaired. Use when no longer running incremental repair on a table or keyspace.
-    move                         Move node on the token ring to a new token
-    netstats                     Print network information on provided host (connecting node by default)
-    nodesyncservice              Manage the NodeSync service on the connected node
-    pausehandoff                 Pause hints delivery process
-    proxyhistograms              Print statistic histograms for network operations
-    rangekeysample               Shows the sampled keys held across all keyspaces
-    rebuild                      Rebuild data by streaming from other nodes (similarly to bootstrap)
-    rebuild_index                A full rebuild of native secondary indexes for a given table
-    refresh                      Load newly placed SSTables to the system without restart
-    refreshsizeestimates         Refresh system.size_estimates
-    reloadlocalschema            Reload local node schema from system tables
-    reloadseeds                  Reload the seed node list from the seed node provider
-    reloadtriggers               Reload trigger classes
-    relocatesstables             Relocates sstables to the correct disk
-    removenode                   Show status of current node removal, force completion of pending removal or remove provided ID
-    repair                       Repair one or more tables
-    repair_admin                 list and fail incremental repair sessions
-    replaybatchlog               Kick off batchlog replay and wait for finish
-    resetlocalschema             Reset node's local schema and resync
-    resumehandoff                Resume hints delivery process
-    ring                         Print information about the token ring
-    scrub                        Scrub (rebuild sstables for) one or more tables
-    sequence                     Run multiple nodetool commands from a file, resource or stdin in sequence. Common options (host, port, username, password) are passed to child commands.
-    setbatchlogreplaythrottle    Set batchlog replay throttle in KB per second, or 0 to disable throttling. This will be reduced proportionally to the number of nodes in the cluster.
-    setcachecapacity             Set global key, row, and counter cache capacities (in MB units)
-    setcachekeystosave           Set number of keys saved by each cache for faster post-restart warmup. 0 to disable
-    setcompactionthreshold       Set min and max compaction thresholds for a given table
-    setcompactionthroughput      Set the MB/s throughput cap for compaction in the system, or 0 to disable throttling
-    setconcurrentcompactors      Set number of concurrent compactors in the system.
-    setconcurrentviewbuilders    Set the number of concurrent view builders in the system
-    sethintedhandoffthrottlekb   Set hinted handoff throttle in kb per second, per delivery thread.
-    setinterdcstreamthroughput   Set the Mb/s throughput cap for inter-datacenter streaming in the system, or 0 to disable throttling
-    setlogginglevel              Set the log level threshold for a given component or class. Will reset to the initial configuration if called with no parameters.
-    setmaxhintwindow             Set the specified max hint window in ms
-    setstreamthroughput          Set the Mb/s throughput cap for streaming in the system, or 0 to disable throttling
-    settimeout                   Set the specified timeout in ms, or 0 to disable timeout
-    settraceprobability          Sets the probability for tracing any given request to value. 0 disables, 1 enables for all requests, 0 is the default
-    sjk                          Run commands of 'Swiss Java Knife'. Run 'nodetool sjk --help' for more information.
-    snapshot                     Take a snapshot of specified keyspaces or a snapshot of the specified table
-    status                       Print cluster information (state, load, IDs, ...)
-    statusautocompaction         status of autocompaction of the given keyspace and table
-    statusbackup                 Status of incremental backup
-    statusbinary                 Status of native transport (binary protocol)
-    statusgossip                 Status of gossip
-    statushandoff                Status of storing future hints on the current node
-    stop                         Stop compaction
-    stopdaemon                   Stop cassandra daemon
-    tablehistograms              Print statistic histograms for a given table
-    tablestats                   Print statistics on tables
-    toppartitions                Sample and print the most active partitions for a given column family
-    tpstats                      Print usage statistics of thread pools
-    truncatehints                Truncate all hints on the local node, or truncate hints for the endpoint(s) specified.
-    upgradesstables              Rewrite sstables (for the requested tables) that are not on the current version (thus upgrading them to said current version)
-    verify                       Verify (check data checksum for) one or more tables
-    version                      Print cassandra version
-    viewbuildstatus              Show progress of a materialized view build
-
-See 'nodetool help <command>' for more information on a specific command.
+.....
 
 ===========
 #Apache Cassandra
@@ -126,6 +18,7 @@ See 'nodetool help <command>' for more information on a specific command.
 The status command shows information about the entire cluster, particularly the state of each
 node, and information about each of those nodes: IP address, data load, number of tokens,total percentage of data saved on each node, host ID, and datacenter and rack.
 
+--in single node
 ubuntu@ds201-node1:~/node/bin$ ./nodetool status
 Datacenter: Cassandra
 
@@ -135,6 +28,18 @@ Status=Up/Down
 UN  127.0.0.1  205.63 KiB  ?       971960f1-2598-455d-a451-c8808497204b  0                                        rack1
 
 Note: Non-system keyspaces don't have the same replication settings, effective ownership information is meaningless
+
+--in multi node
+hdu@mh2:~$ nodetool status
+Datacenter: datacenter1
+=======================
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address        Load        Tokens  Owns (effective)  Host ID                               Rack 
+UN  192.168.103.4  179.54 KiB  256     60.0%             bc99d2b2-1ab8-4b3d-91d1-73a6e92b5359  rack1
+UN  192.168.103.5  119.92 KiB  256     74.0%             1280b649-f98a-4aa5-aed9-9a3adf26c496  rack1
+UN  192.168.103.3  159.52 KiB  256     66.0%             6dcb46b7-b82d-4f09-84fc-026b90794bcf  rack1
+
 
 #Datastax enterprise
 ubuntu@ds201-node1:~/node/bin$ ./dsetool status
@@ -153,6 +58,7 @@ Apache CassandraTM.
 ============
 
 #nodetool info
+--in single node
 ubuntu@ds201-node1:~/node/bin$ ./nodetool info
 ID                     : 971960f1-2598-455d-a451-c8808497204b
 Gossip active          : true
@@ -176,9 +82,53 @@ The info command displays information about the connected node, which includes t
 information, host ID, protocol status, data load, node uptime, heap memory usage and
 capacity, datacenter and rack information, number of errors reported, cache usage, and
 percentage of SSTables that have been incrementally repaired.
-======================
-nodetool ring
-=====================
+
+--in multi node
+hdu@mh2:~$ nodetool info
+ID                     : bc99d2b2-1ab8-4b3d-91d1-73a6e92b5359
+Gossip active          : true
+Native Transport active: true
+Load                   : 179.54 KiB
+Generation No          : 1700615088
+Uptime (seconds)       : 243
+Heap Memory (MB)       : 161.09 / 1014.00
+Off Heap Memory (MB)   : 0.00
+Data Center            : datacenter1
+Rack                   : rack1
+Exceptions             : 0
+Key Cache              : entries 10, size 896 bytes, capacity 50 MiB, 92 hits, 105 requests, 0.876 recent hit rate, 14400 save period in seconds
+Row Cache              : entries 0, size 0 bytes, capacity 0 bytes, 0 hits, 0 requests, NaN recent hit rate, 0 save period in seconds
+Counter Cache          : entries 0, size 0 bytes, capacity 25 MiB, 0 hits, 0 requests, NaN recent hit rate, 7200 save period in seconds
+Network Cache          : size 8 MiB, overflow size: 0 bytes, capacity 63 MiB
+Percent Repaired       : 100.0%
+Token                  : (invoke with -T/--tokens to see all 256 tokens)
+
+--in multi node cluster
+hdu@mh2:~$ nodetool ring
+
+Datacenter: datacenter1
+==========
+Address             Rack        Status State   Load            Owns                Token                                       
+                                                                                   9212322661507734165                         
+192.168.103.3       rack1       Up     Normal  159.52 KiB      65.95%              -9211980501134640027                        
+192.168.103.5       rack1       Up     Normal  119.92 KiB      74.01%              -9190156010506808712                        
+192.168.103.4       rack1       Up     Normal  179.54 KiB      60.04%              -9174170618174946117                        
+192.168.103.3       rack1       Up     Normal  159.52 KiB      65.95%              -9144539666105850265                        
+192.168.103.5       rack1       Up     Normal  119.92 KiB      74.01%              -9115642899194864773                        
+192.168.103.3       rack1       Up     Normal  159.52 KiB      65.95%              -9098031998131860961                        
+192.168.103.5       rack1       Up     Normal  119.92 KiB      74.01%              -9068621586794155506                        
+192.168.103.4       rack1       Up     Normal  179.54 KiB      60.04%              -9046783616474764377
+.............
+192.168.103.3       rack1       Up     Normal  159.52 KiB      65.95%              9093416482341009847                         
+192.168.103.5       rack1       Up     Normal  119.92 KiB      74.01%              9122465532444229692                         
+192.168.103.4       rack1       Up     Normal  179.54 KiB      60.04%              9144119227343856112                         
+192.168.103.3       rack1       Up     Normal  159.52 KiB      65.95%              9178677721486597802                         
+192.168.103.4       rack1       Up     Normal  179.54 KiB      60.04%              9212322661507734165                         
+
+  Warning: "nodetool ring" is used to output all the tokens of a node.
+  To view status related info of a node use "nodetool status" instead.
+
+--in single node
 
 #nodetool describecluster
 ubuntu@ds201-node1:~/node/bin$ ./nodetool describecluster
@@ -192,7 +142,38 @@ Cluster Information:
 
 describecluster shows the settings that are common across all of the nodes in the cluster
 and the current schema version used by each node.
-=====================
+
+--in multi node
+hdu@mh2:~$ nodetool describecluster
+Cluster Information:
+	Name: Test ClusterNp
+	Snitch: org.apache.cassandra.locator.SimpleSnitch
+	DynamicEndPointSnitch: enabled
+	Partitioner: org.apache.cassandra.dht.Murmur3Partitioner
+	Schema versions:
+		54e17321-3f2e-37ca-9b08-d91ba7bdd369: [192.168.103.3, 192.168.103.4, 192.168.103.5]
+
+Stats for all nodes:
+	Live: 3
+	Joining: 0
+	Moving: 0
+	Leaving: 0
+	Unreachable: 0
+
+Data Centers: 
+	datacenter1 #Nodes: 3 #Down: 0
+
+Database versions:
+	4.1.2: [192.168.103.3:7000, 192.168.103.4:7000, 192.168.103.5:7000]
+
+Keyspaces:
+	system_schema -> Replication class: LocalStrategy {}
+	system -> Replication class: LocalStrategy {}
+	system_auth -> Replication class: SimpleStrategy {replication_factor=1}
+	system_distributed -> Replication class: SimpleStrategy {replication_factor=3}
+	system_traces -> Replication class: SimpleStrategy {replication_factor=2}
+
+--in single node
 ubuntu@ds201-node1:~/node/bin$ ./nodetool getlogginglevels
 
 Logger Name                                        Log Level
@@ -212,6 +193,13 @@ org.apache.solr.handler.component                       WARN
 org.apache.solr.search.SolrIndexSearcher                WARN
 org.apache.solr.update                                  WARN
 org.apache.spark.rpc                                   ERROR
+
+--in multi node
+hdu@mh2:~$ nodetool getlogginglevels
+
+Logger Name                                        Log Level
+ROOT                                                    INFO
+org.apache.cassandra                                   DEBUG
 
 ====================
 ./nodetool setlogginglevel org.apache.cassandra TRACE
@@ -239,8 +227,66 @@ Wait for Apache CassandraTM to start before continuing.
 
 ==================
 nodetool gossipinfo
+--in multi node
+hdu@mh2:~$ nodetool gossipinfo
+/192.168.103.3
+  generation:1700615082
+  heartbeat:456
+  LOAD:407:163350.0
+  SCHEMA:13:54e17321-3f2e-37ca-9b08-d91ba7bdd369
+  DC:9:datacenter1
+  RACK:11:rack1
+  RELEASE_VERSION:6:4.1.2
+  NET_VERSION:2:12
+  HOST_ID:3:6dcb46b7-b82d-4f09-84fc-026b90794bcf
+  RPC_READY:41:true
+  NATIVE_ADDRESS_AND_PORT:4:192.168.103.3:9042
+  STATUS_WITH_PORT:19:NORMAL,-1052696625419917833
+  SSTABLE_VERSIONS:7:big-nb
+  TOKENS:18:<hidden>
+/192.168.103.4
+  generation:1700615088
+  heartbeat:440
+  STATUS:19:NORMAL,-1021166935752633034
+  LOAD:395:183852.0
+  SCHEMA:13:54e17321-3f2e-37ca-9b08-d91ba7bdd369
+  DC:9:datacenter1
+  RACK:11:rack1
+  RELEASE_VERSION:6:4.1.2
+  RPC_ADDRESS:5:192.168.103.4
+  NET_VERSION:2:12
+  HOST_ID:3:bc99d2b2-1ab8-4b3d-91d1-73a6e92b5359
+  RPC_READY:32:true
+  NATIVE_ADDRESS_AND_PORT:4:192.168.103.4:9042
+  STATUS_WITH_PORT:18:NORMAL,-1021166935752633034
+  SSTABLE_VERSIONS:7:big-nb
+  TOKENS:17:<hidden>
+/192.168.103.5
+  generation:1700615103
+  heartbeat:426
+  LOAD:396:122796.0
+  SCHEMA:13:54e17321-3f2e-37ca-9b08-d91ba7bdd369
+  DC:9:datacenter1
+  RACK:11:rack1
+  RELEASE_VERSION:6:4.1.2
+  NET_VERSION:2:12
+  HOST_ID:3:1280b649-f98a-4aa5-aed9-9a3adf26c496
+  RPC_READY:32:true
+  NATIVE_ADDRESS_AND_PORT:4:192.168.103.5:9042
+  STATUS_WITH_PORT:18:NORMAL,-1108277113667924192
+  SSTABLE_VERSIONS:7:big-nb
+  TOKENS:17:<hidden>
+
 nodetool gettimeout read
 nodetool gettimeout write
+
+--in multi node
+hdu@mh2:~$ nodetool gettimeout read
+Current timeout for type read: 5000 ms
+hdu@mh2:~$ nodetool gettimeout write
+Current timeout for type write: 2000 ms
+
+
 nodetool version
 ==============
 We will now stress the node using a simple tool called Apache Cassandra(TM) Stress. 
