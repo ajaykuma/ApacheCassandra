@@ -179,6 +179,7 @@ percentage of SSTables that have been incrementally repaired.
 ======================
 nodetool ring
 =====================
+
 #nodetool describecluster
 ubuntu@ds201-node1:~/node/bin$ ./nodetool describecluster
 Cluster Information:
