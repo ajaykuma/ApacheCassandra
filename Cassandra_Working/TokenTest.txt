@@ -9,7 +9,7 @@ Using this python function, you can get a list of the ideal intiial tokens for a
 RING_SIZE = 2**127
 def tokens(n):
   rv = []
-  for x in xrange(n): 
+  for x in range(n): 
     rv.append(RING_SIZE / n * x)
   return rv
 
