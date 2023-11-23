@@ -479,26 +479,3 @@ cqlsh:keyspace1> select * from standard1 limit 5;
  0x33344b50353133365030 | 0xd34820f1e930d9257e02158146c64ea6b052903710919294f196c174591318a00c1a | 0x6becf1098ae914e65c0325081a8a4418f9d65575a831db087102140b8b52db166ef0 | 0x34b89becc7ae1d391e814edc105e7f7e5efa495e2ad4850a753bc5236902f6380690 | 0x02e517fcc81da646fc7ba6f9f5dd88a4012e33e977d055a4ea50a7c25da9ba19f6ea | 0x5692948b8be2c35ed8af2e40135e26fddb7af2f425374cf835622e20a74cf3655e80
  0x324d4f3031314c303330 | 0xc6d16d17a30611dc7646de3463be469dc56130a24345063854c356853a9966be1f01 | 0xbfdd8fd17ec738056feb9c176f64c5f0532b672dc398cd6d3470f05fc3aae437d990 | 0xc1cc57455dfa0cc0dd595accfa3751f6d5edac2e11b4e763ea88ca2b7f45ec77ab8d | 0x7998ea0ed12980933317b639d9b92ee20d0e6d66b1a531bd75c2c367aeeee47b73d4 | 0x9142cb1c0668c414c25eb264e52752f5e2cd86f3b15b3c5f5d8413f88fbcffbda7d2
  0x30303138344f4e503530 | 0x37e76a8c71afc1adda7958aa1182c5c100f120d91ced0323f3cc5090319fda464bf3 | 0x1a3a594716dc09025772fcf56724177110faa26f24e66a38cae64be7a568a182b9c9 | 0xcae650315e85148d46c91c857bc8a87e767fdb6e0450bee503f556bc1999a1dfeab5 | 0x6b48adf2bc3f36e8a1adb1314f41f28f0fbb69d2551f0b0e650f6595097af61c99a1 | 0xf8f02decf64b8889cbd28a01080b368849f065889b5de4addd73dc78c4343872a5c0
-
-(5 rows)
-==============
-
-#Changing number of token for a particular node
---If cluster node was already running, it might have 256 token by default.
---Stop cassandra
---delete data and logs
-> rm -rf /usr/local/cassandra/data
-> rm -rf /usr/local/cassandra/logs/*
---edit /usr/local/cassandra/conf/cassandra.yaml and change tokens to 128.
---start cassandra
-> cassandra -f
---it might fail with following error
-"A node with address /192.168.103.5:7000 already exists, cancelling join. Use cassandra.replace_address if you want to replace this node."
---Option 1:
---from other node, issue 'nodetool status' command and get nodeid of the node which had edited config and restarted
---now on other node
-> nodetool removenode <nodeid>
---restart cassandra
---check nodetool status and check number of tokens
-
-===============================

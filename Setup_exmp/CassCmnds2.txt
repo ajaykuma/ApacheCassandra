@@ -1,0 +1,274 @@
+==============
+
+#Changing number of token for a particular node
+--If cluster node was already running, it might have 256 token by default.
+--Stop cassandra
+--delete data and logs
+> rm -rf /usr/local/cassandra/data
+> rm -rf /usr/local/cassandra/logs/*
+--edit /usr/local/cassandra/conf/cassandra.yaml and change tokens to 128.
+--start cassandra
+> cassandra -f
+--it might fail with following error
+"A node with address /192.168.103.5:7000 already exists, cancelling join. Use cassandra.replace_address if you want to replace this node."
+--Option 1:
+--from other node, issue 'nodetool status' command and get nodeid of the node which had edited config and restarted
+--now on other node
+> nodetool removenode <nodeid>
+--restart cassandra
+--check nodetool status and check number of tokens
+
+===============================
+hdu@mh2:~$ nodetool help | grep stats
+
+--tpstats tool gives info on thread pools that cassandra maintains (cluster metrics based on SEDA)
+--to find statistics on thread pool
+hdu@mh2:~$ nodetool tpstats
+Pool Name                    Active Pending Completed Blocked All time blocked
+RequestResponseStage         0      0       1         0       0               
+MutationStage                0      0       20817     0       0               
+MiscStage                    0      0       3         0       0               
+CompactionExecutor           0      0       11920     0       0               
+MemtableReclaimMemory        0      0       44        0       0               
+PendingRangeCalculator       0      0       8         0       0               
+GossipStage                  0      0       50927     0       0               
+SecondaryIndexManagement     0      0       1         0       0               
+HintsDispatcher              0      0       0         0       0               
+MigrationStage               0      0       1         0       0               
+MemtablePostFlush            0      0       77        0       0               
+PerDiskMemtableFlushWriter_0 0      0       42        0       0               
+ValidationExecutor           0      0       0         0       0               
+Sampler                      0      0       0         0       0               
+ViewBuildExecutor            0      0       0         0       0               
+MemtableFlushWriter          0      0       44        0       0               
+CacheCleanupExecutor         0      0       0         0       0               
+Native-Transport-Requests    0      0       0         0       0               
+
+Latencies waiting in queue (micros) per dropped message types
+Message type                      Dropped     50%      95%      99%      Max   
+READ_RSP                          0           0.0      0.0      0.0      0.0   
+RANGE_REQ                         0           0.0      0.0      0.0      0.0   
+PING_REQ                          0           0.0      0.0      0.0      0.0   
+PAXOS2_COMMIT_REMOTE_RSP          0           0.0      0.0      0.0      0.0   
+PAXOS2_COMMIT_AND_PREPARE_RSP     0           0.0      0.0      0.0      0.0   
+_SAMPLE                           0           0.0      0.0      0.0      0.0   
+VALIDATION_RSP                    0           0.0      0.0      0.0      0.0   
+SCHEMA_PULL_RSP                   0           0.0      0.0      0.0      0.0   
+SYNC_RSP                          0           0.0      0.0      0.0      0.0   
+PAXOS2_CLEANUP_START_PREPARE_REQ  0           0.0      0.0      0.0      0.0   
+PAXOS2_PREPARE_REFRESH_REQ        0           0.0      0.0      0.0      0.0   
+SCHEMA_VERSION_REQ                0           0.0      0.0      0.0      0.0   
+HINT_RSP                          0           0.0      0.0      0.0      0.0   
+BATCH_REMOVE_RSP                  0           0.0      0.0      0.0      0.0   
+PAXOS2_CLEANUP_RSP                0           0.0      0.0      0.0      0.0   
+PAXOS2_CLEANUP_FINISH_PREPARE_RSP 0           0.0      0.0      0.0      0.0   
+PAXOS_COMMIT_REQ                  0           0.0      0.0      0.0      0.0   
+SNAPSHOT_RSP                      0           0.0      0.0      0.0      0.0   
+COUNTER_MUTATION_REQ              0           0.0      0.0      0.0      0.0   
+PAXOS2_PROPOSE_REQ                0           0.0      0.0      0.0      0.0   
+GOSSIP_DIGEST_SYN                 0           3973.0   6866.0   8239.0   8239.0
+PAXOS_PREPARE_REQ                 0           0.0      0.0      0.0      0.0   
+PREPARE_MSG                       0           0.0      0.0      0.0      0.0   
+PAXOS2_PREPARE_REFRESH_RSP        0           0.0      0.0      0.0      0.0   
+PAXOS_COMMIT_RSP                  0           0.0      0.0      0.0      0.0   
+HINT_REQ                          0           0.0      0.0      0.0      0.0   
+BATCH_REMOVE_REQ                  0           0.0      0.0      0.0      0.0   
+STATUS_RSP                        0           0.0      0.0      0.0      0.0   
+READ_REPAIR_RSP                   0           0.0      0.0      0.0      0.0   
+PAXOS2_PROPOSE_RSP                0           0.0      0.0      0.0      0.0   
+GOSSIP_DIGEST_ACK2                0           3311.0   6866.0   6866.0   6866.0
+CLEANUP_MSG                       0           0.0      0.0      0.0      0.0   
+REQUEST_RSP                       0           0.0      0.0      0.0      0.0   
+TRUNCATE_RSP                      0           0.0      0.0      0.0      0.0   
+UNUSED_CUSTOM_VERB                0           0.0      0.0      0.0      0.0   
+REPLICATION_DONE_RSP              0           0.0      0.0      0.0      0.0   
+SNAPSHOT_REQ                      0           0.0      0.0      0.0      0.0   
+ECHO_REQ                          0           0.0      0.0      0.0      0.0   
+PAXOS2_REPAIR_REQ                 0           0.0      0.0      0.0      0.0   
+PAXOS2_CLEANUP_COMPLETE_RSP       0           0.0      0.0      0.0      0.0   
+PREPARE_CONSISTENT_REQ            0           0.0      0.0      0.0      0.0   
+FAILURE_RSP                       0           0.0      0.0      0.0      0.0   
+BATCH_STORE_RSP                   0           0.0      0.0      0.0      0.0   
+SCHEMA_PUSH_RSP                   0           0.0      0.0      0.0      0.0   
+MUTATION_RSP                      0           0.0      0.0      0.0      0.0   
+FINALIZE_PROPOSE_MSG              0           0.0      0.0      0.0      0.0   
+ECHO_RSP                          0           0.0      0.0      0.0      0.0   
+PAXOS2_REPAIR_RSP                 0           0.0      0.0      0.0      0.0   
+INTERNAL_RSP                      0           0.0      0.0      0.0      0.0   
+FAILED_SESSION_MSG                0           0.0      0.0      0.0      0.0   
+PAXOS2_CLEANUP_COMPLETE_REQ       0           0.0      0.0      0.0      0.0   
+_TRACE                            0           0.0      0.0      0.0      0.0   
+SCHEMA_VERSION_RSP                0           0.0      0.0      0.0      0.0   
+FINALIZE_COMMIT_MSG               0           0.0      0.0      0.0      0.0   
+SNAPSHOT_MSG                      0           0.0      0.0      0.0      0.0   
+PREPARE_CONSISTENT_RSP            0           0.0      0.0      0.0      0.0   
+PAXOS_PROPOSE_REQ                 0           0.0      0.0      0.0      0.0   
+PAXOS_PREPARE_RSP                 0           0.0      0.0      0.0      0.0   
+MUTATION_REQ                      0           0.0      0.0      0.0      0.0   
+PAXOS2_CLEANUP_RSP2               0           0.0      0.0      0.0      0.0   
+READ_REQ                          0           0.0      0.0      0.0      0.0   
+PING_RSP                          0           0.0      0.0      0.0      0.0   
+PAXOS2_COMMIT_REMOTE_REQ          0           0.0      0.0      0.0      0.0   
+RANGE_RSP                         0           0.0      0.0      0.0      0.0   
+VALIDATION_REQ                    0           0.0      0.0      0.0      0.0   
+SYNC_REQ                          0           0.0      0.0      0.0      0.0   
+PAXOS2_PREPARE_RSP                0           0.0      0.0      0.0      0.0   
+_TEST_1                           0           0.0      0.0      0.0      0.0   
+GOSSIP_SHUTDOWN                   0           0.0      0.0      0.0      0.0   
+PAXOS2_CLEANUP_START_PREPARE_RSP  0           0.0      0.0      0.0      0.0   
+TRUNCATE_REQ                      0           0.0      0.0      0.0      0.0   
+_TEST_2                           0           0.0      0.0      0.0      0.0   
+GOSSIP_DIGEST_ACK                 0           3973.0   6866.0   6866.0   6866.0
+PAXOS2_CLEANUP_REQ                0           0.0      0.0      0.0      0.0   
+SCHEMA_PUSH_REQ                   0           0.0      0.0      0.0      0.0   
+FINALIZE_PROMISE_MSG              0           0.0      0.0      0.0      0.0   
+PAXOS2_CLEANUP_FINISH_PREPARE_REQ 0           0.0      0.0      0.0      0.0   
+PAXOS2_PREPARE_REQ                0           0.0      0.0      0.0      0.0   
+BATCH_STORE_REQ                   0           0.0      0.0      0.0      0.0   
+COUNTER_MUTATION_RSP              0           0.0      0.0      0.0      0.0   
+REPAIR_RSP                        0           0.0      0.0      0.0      0.0   
+PAXOS2_COMMIT_AND_PREPARE_REQ     0           0.0      0.0      0.0      0.0   
+STATUS_REQ                        0           0.0      0.0      0.0      0.0   
+SCHEMA_PULL_REQ                   0           0.0      0.0      0.0      0.0   
+READ_REPAIR_REQ                   0           0.0      0.0      0.0      0.0   
+REPLICATION_DONE_REQ              0           0.0      0.0      0.0      0.0   
+PAXOS_PROPOSE_RSP                 0           0.0      0.0      0.0      0.0   
+
+nodetool tablestats
+nodetool tablestats | grep Keyspace
+nodetool tablestats | grep Table
+nodetool getseeds
+nodetool toppartitions
+Frequency of reads by partition:
+   Nothing recorded during sampling period...
+
+Frequency of writes by partition:
+   Nothing recorded during sampling period...
+
+Frequency of cas contentions by partition:
+   Nothing recorded during sampling period...
+
+Max mutation size by partition:
+   Nothing recorded during sampling period...
+
+Longest read query times:
+   Query                                                                                                                                                                      Microseconds
+   SELECT mutations, version FROM system.batches WHERE token(id) > 24185a4f-89d1-11ee-7f7f-7f7f7f7f7f7f AND token(id) <= 2a0e625f-89d1-11ee-7f7f-7f7f7f7f7f7f ALLOW FILTERING 1659 
+
+
+--run stress test against a node and run 'nodetool toppartitions' 
+nodetool toppartitions
+Frequency of reads by partition:
+   Nothing recorded during sampling period...
+
+Frequency of writes by partition:
+   Table               Partition            Count +/-
+   keyspace1.standard1 3433394b503831363030 4     3  
+   keyspace1.standard1 34334f4c39344d333331 4     3  
+   keyspace1.standard1 384f505038344c354f30 4     3  
+   keyspace1.standard1 504b3037305030393730 4     3  
+   keyspace1.standard1 3233334b4c3137343031 4     3  
+   keyspace1.standard1 324f30393035324d4e30 4     3  
+   keyspace1.standard1 4f313530333334323031 4     3  
+   keyspace1.standard1 3832303433334e363330 4     3  
+   keyspace1.standard1 3936394e3834384d3730 4     3  
+   keyspace1.standard1 39503438314e32393231 4     3  
+
+Frequency of cas contentions by partition:
+   Nothing recorded during sampling period...
+
+Max mutation size by partition:
+   Table               Partition            Bytes
+   keyspace1.standard1 33314e504b4b32363431 300  
+   keyspace1.standard1 4d32304c33314e374c30 300  
+   keyspace1.standard1 36364d3431384f4c3131 300  
+   keyspace1.standard1 4b5038314c3533363431 300  
+   keyspace1.standard1 4e394b393734314d3431 300  
+   keyspace1.standard1 4c303033334b4c353231 300  
+   keyspace1.standard1 32333131353650314d30 300  
+   keyspace1.standard1 333530354b3337303030 300  
+   keyspace1.standard1 3331313334374e504f30 300  
+   keyspace1.standard1 354b4e394b3231353530 300  
+
+Longest read query times:
+   Query                                                                                                                                                                      Microseconds
+   SELECT mutations, version FROM system.batches WHERE token(id) > 8976365f-89d1-11ee-7f7f-7f7f7f7f7f7f AND token(id) <= 8f6c8c8f-89d1-11ee-7f7f-7f7f7f7f7f7f ALLOW FILTERING 215         
+
+--Perform compaction on recently written keyspace
+nodetool compact keyspace1 standard1
+
+--check compaction history
+nodetool compactionhistory
+Compaction History: 
+id                                   keyspace_name columnfamily_name   compacted_at            bytes_in bytes_out rows_merged
+
+--describe ring
+nodetool describering keyspace1
+nodetool describering keyspace1 | grep 192.168.103.3 | wc -l
+256
+
+--running a cleanup
+Failure to run nodetool cleanup after adding a node may result in data inconsistencies including resurrection of previously deleted data.
+
+nodetool cleanup
+
+--checking SSTables
+-----------
+cqlsh mh2
+
+Create Keyspace TestKS
+     with replication = {
+        'class' : 'SimpleStrategy',
+        'replication_factor': 3
+        };
+
+use TestKS;
+
+create table vtest(
+v_id timeuuid,
+added_date timestamp,
+Title Text,
+primary key (v_id));
+
+describe tables;
+
+insert into vtest(v_id,added_date,Title) values (1645ea59-14bd-11e5-a993-8138354b7e31,'2023-01-29','Cassandra commands info');
+insert into vtest(v_id,added_date,Title) values (245e8024-14bd-11e5-9743-8238356b7e32,'2023-02-27','Cassandra commands information');
+
+select * from vtest;
+
+--Now checking SSTables for this one
+ls /usr/local/cassandra/data/data/testks/
+vtest-14f81d1089d811eebc5ffd990e13715c
+
+ls /usr/local/cassandra/data/data/testks/vtest-14f81d1089d811eebc5ffd990e13715c/
+backups
+
+hdu@mh2:~$ nodetool flush
+
+hdu@mh2:~$ ls /usr/local/cassandra/data/data/testks/vtest-14f81d1089d811eebc5ffd990e13715c/
+backups                      nb-1-big-Data.db       nb-1-big-Filter.db  nb-1-big-Statistics.db  nb-1-big-TOC.txt
+nb-1-big-CompressionInfo.db  nb-1-big-Digest.crc32  nb-1-big-Index.db   nb-1-big-Summary.db
+
+--use nodetool to check SSTable file
+hdu@mh2:~$ nodetool getsstables testks vtest 245e8024-14bd-11e5-9743-8238356b7e32
+/usr/local/apache-cassandra-4.1.2/data/data/testks/vtest-14f81d1089d811eebc5ffd990e13715c/nb-1-big-Data.db
+
+--similarly check on other node for replicated copy
+hdu@mh1:~$ ls /usr/local/cassandra/data/data/testks/
+vtest-14f81d1089d811eebc5ffd990e13715c
+
+hdu@mh1:~$ ls /usr/local/cassandra/data/data/testks/vtest-14f81d1089d811eebc5ffd990e13715c/
+backups
+
+hdu@mh1:~$ nodetool flush
+
+hdu@mh1:~$ ls /usr/local/cassandra/data/data/testks/vtest-14f81d1089d811eebc5ffd990e13715c/
+backups                      nb-1-big-Data.db       nb-1-big-Filter.db  nb-1-big-Statistics.db  nb-1-big-TOC.txt
+nb-1-big-CompressionInfo.db  nb-1-big-Digest.crc32  nb-1-big-Index.db   nb-1-big-Summary.db
+
+
+-----------
+--other options--
+https://docs.datastax.com/en/dse/5.1/docs/managing/tools/nodetool/get-cache-capacity.html
+
