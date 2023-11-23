@@ -113,6 +113,8 @@ cqlsh:killrvideo> create table videos(
               ... Title Text,
               ... primary key (video_id));
 
+select * from system_schema.tables where keyspace_name = ' ' ;
+
 cqlsh:killrvideo> describe tables;
 
 videos
@@ -345,4 +347,20 @@ delete emp_city from emp where emp_id = 2;
 apply batch;
 
 ==============
+#Collection types i.e. set,list or map
+
+UDF/Tuple type
+--create a tuple
+create table subjects (
+k int primary key,
+v tuple<int, text, float>
+);
+
+--insert values
+insert into subjects (k,v)
+values (0,(3,'cs', 2.1));
+
+--retrieve
+select * from students;
+
 
