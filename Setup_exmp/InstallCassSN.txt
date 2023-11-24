@@ -1,0 +1,112 @@
+#Setting up single node cluster
+Prepare machine instructions:
+
+ifconfig --- to check ipaddress
+hostname --- to check hostname
+sudo su --- to login as root
+So, login as root and install following:
+apt-get install vim
+apt-get install wget
+apt-get install openssh-server
+apt-get update
+
+update /etc/hosts
+valid entries would be
+127.0.0.1    localhost
+ipaddress    hostname
+
+for your user you intend to use root/dedicated user ,generate ssh keys
+ssh-keygen -t rsa -P ""
+
+If multiple machines, generate ssh keys for same user on all machines
+Then copy pub key to local machine and other machines
+
+to copy to other machines 
+root@machine1$ssh-copy-id -i $HOME/.ssh/id_rsa.pub root@machine2
+to copy to itself
+root@machine1$cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+
+Test ssh from machine1 to machine1
+              machine1 to machine2
+              machine2 to machine1
+
+download oracle jdk and set the path of java in .bashrc of respective user
+export JAVA_HOME=/usr/lib/jvm/jdk1.8.0_171
+export PATH=$PATH:$JAVA_HOME/bin
+
+disable firewall on all machines
+ufw disable
+
+if you intend to use root user and would want ssh between machines for root without password
+change password for root using ---- passwd
+edit /etc/ssh/sshd_config --- and
+
+#PermitRootLogin prohibit-password
+PermitRootLogin yes
+ 
+and then refresh sshd
+service sshd restart ( or reboot)
+
+#===================================================================
+#Installation from Debian packages
+#Add the Apache repository of Cassandra to /etc/apt/sources.list.d/cassandra.sources.list, for example for version 3.6:
+echo "deb http://www.apache.org/dist/cassandra/debian 36x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+#Update the repositories:
+sudo apt-get update
+#If you encounter this error:
+#GPG error: http://www.apache.org 36x InRelease: The following signatures couldn't be verified because the public key
+ is not available: NO_PUBKEY 749D6EEC0353B12C
+#Then add the public key 749D6EEC0353B12C as follows:
+gpg --keyserver pgp.mit.edu --recv-keys 749D6EEC0353B12C
+gpg --export --armor 749D6EEC0353B12C | sudo apt-key add -
+#and repeat sudo apt-get update. The actual key may be different, you get it from the error message itself. For a full list of Apache contributors public keys, you can refer to link: https://www.apache.org/dist/cassandra/KEYS
+#Install Cassandra
+sudo apt-get install cassandra
+#Start or stop cassandra
+sudo service cassandra start
+sudo service cassandra stop
+sudo service cassandra status
+#check status by invoking nodetool
+nodetool status
+#default location of configuration files is /etc/cassandra
+#default location of log files is /var/log/cassandra
+#default location of data directories ie /var/lib/cassandra
+#Test cqlsh usage
+apt install python-pip
+pip install cassandra-driver
+export CQLSH_NO_BUNDLED=true(optionally you can set this in .bashrc of your userid that you will use to start cqlsh)
+
+
+===============================================================================
+#Installation from binary tarball files
+#Download the latest stable release from the Apache Cassandra downloads website or from archive.apache.org/dist/
+#Downloaded apache-cassandra-4.1.2-bin.tar.gz 
+#untar it in your preferred location, I did it in /usr/local
+while logged in as hdu user
+
+cd /usr/local
+sudo tar -xvf /home/hdu/Downloads/apache-cassandra-4.1.2-bin.tar.gz
+
+#create a link to the directory
+sudo ln -s apache-cassandra-4.1.2 cassandra
+sudo chown -R hdu:hdu apache-cassandra-4.1.2
+sudo chown -R hdu:hdu cassandra 
+
+#change ownership to root/preferred user
+#update .bashrc with cassandra path (for user that you will use to launch cassandra)
+export CASSANDRA_HOME=/usr/local/casandra
+export PATH=$PATH:$CASSANDRA_HOME/bin
+#exit .bashrc and refresh it using --- source .bashrc
+start cassandra in foreground "cassandra -f"
+
+check status "nodetool status"
+start cassandra in background "cassandra"
+stop cassandra by "ctl+c"
+#Older versions defaulted to /var/log/cassandra and /var/lib/cassandra. Due to this, it is necessary to either start Cassandra with root privileges or change conf/cassandra.yaml to use directories owned by the current user.
+
+#Test cqlsh usage
+apt install python-pip
+pip install cassandra-driver
+export CQLSH_NO_BUNDLED=true (optionally you can set this in .bashrc of your userid that you will use to start cqlsh)
+
+#type cqlsh

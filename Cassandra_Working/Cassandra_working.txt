@@ -1,0 +1,535 @@
+#to start
+bin/cassandra (apache cassandra)
+bin/dse cassandra (in datastax)
+bin/dsetool status (in datastax)
+bin/nodetool status (apache cassandra)
+
+
+--checking multiple SSTble files scenario
+Insert data into existing 'keyspace > table' with new values in one of the fields..
+perform nodetool flush
+--query table to see if new edits reflect
+check in data path for multiple SSTable files..
+nodetool compactionhistory
+nodetool compact testks2 vtest
+nodetool compactionhistory
+check in data pth for latest SSTable files..
+--query table to see if new edits reflect
+
+------------------------
+bin/cqlsh
+
+in cqlsh
+Create Keyspace KillrVideo
+     with replication = {
+        'class' : 'SimpleStrategy',
+        'replication_factor': 1
+        };
+
+#to switch between keyspaces
+use killrvideo;
+
+#above commands takes you within context of keyspace
+#this allows you to video tables, indexes, issue commands without need of setting keyspaces explicitly
+
+#to create a table
+
+cqlsh>help
+
+cqlsh> select * from system_schema.keyspaces;
+
+ keyspace_name      | durable_writes | replication
+--------------------+----------------+-------------------------------------------------------------------------------------
+         killrvideo |           True | {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1'}
+        system_auth |           True | {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1'}
+      system_schema |           True |                             {'class': 'org.apache.cassandra.locator.LocalStrategy'}
+   dse_system_local |           True |                             {'class': 'org.apache.cassandra.locator.LocalStrategy'}
+         dse_system |           True |                        {'class': 'org.apache.cassandra.locator.EverywhereStrategy'}
+         dse_leases |           True | {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1'}
+         solr_admin |           True |                        {'class': 'org.apache.cassandra.locator.EverywhereStrategy'}
+ system_distributed |           True | {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '3'}
+             system |           True |                             {'class': 'org.apache.cassandra.locator.LocalStrategy'}
+           dse_perf |           True | {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1'}
+      system_traces |           True | {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '2'}
+       dse_security |           True | {'class': 'org.apache.cassandra.locator.SimpleStrategy', 'replication_factor': '1'}
+
+(12 rows)
+
+cqlsh> describe keyspaces;
+
+dse_system_local  system_schema  dse_leases          dse_perf  
+dse_security      system_auth    system_distributed  killrvideo
+solr_admin        system         system_traces       dse_system
+
+cqlsh> describe tables;
+
+Keyspace dse_system_local
+-------------------------
+solr_resources
+
+Keyspace dse_security
+---------------------
+role_options  digest_tokens  spark_security
+
+Keyspace solr_admin
+-------------------
+solr_resources
+
+Keyspace system_schema
+----------------------
+tables     triggers    views    keyspaces  dropped_columns
+functions  aggregates  indexes  types      columns        
+
+Keyspace system_auth
+--------------------
+role_permissions  role_members  roles
+
+Keyspace system
+---------------
+repairs              view_builds_in_progress  paxos           transferred_ranges
+available_ranges     peers                    size_estimates
+batches              compaction_history       built_views   
+prepared_statements  sstable_activity         range_xfers   
+"IndexInfo"          peer_events              local         
+
+Keyspace dse_leases
+-------------------
+leases  logs
+
+Keyspace system_distributed
+---------------------------
+repair_history   view_build_status      nodesync_user_validations
+nodesync_status  parent_repair_history
+
+Keyspace system_traces
+----------------------
+events  sessions
+
+Keyspace dse_perf
+-----------------
+node_slow_log
+
+Keyspace killrvideo
+-------------------
+videos
+
+Keyspace dse_system
+-------------------
+encrypted_keys
+
+cqlsh> use killrvideo;
+
+cqlsh:killrvideo> create table videos(
+              ... video_id timeuuid,
+              ... added_date timestamp,
+              ... Title Text,
+              ... primary key (video_id));
+
+select * from system_schema.tables where keyspace_name = ' ' ;
+
+cqlsh:killrvideo> describe tables;
+
+videos
+
+cqlsh> describe table killrvideo.videos;
+
+CREATE TABLE killrvideo.videos (
+    video_id timeuuid PRIMARY KEY,
+    added_date timestamp,
+    title text
+) WITH bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+#to insert the following data
+video_id
+1645ea59-14bd-11e5-a993-8138354b7e31
+245e8024-14bd-11e5-9743-8238356b7e32
+3452f7de-14bd-11e5-855e-8738355b7e3a
+4845ed97-14bd-11e5-8a40-8338255b7e33
+5645f8bd-14bd-11e5-af1a-8638355b8e3a
+
+added_date
+2014-01-29
+2012-04-03
+2013-03-17
+2013-10-16
+2013-04-16
+
+title
+Cassandra History
+Cassandra & SSDs
+Cassandra Intro
+DataStax DevCenter
+What is DataStax Enterprise?
+
+cqlsh:killrvideo> insert into videos(video_id,added_date,Title) values (1645ea59-14bd-11e5-a993-8138354b7e31,'2014-01-29','Cassandra History');
+cqlsh:killrvideo> select * from videos;
+
+ video_id                             | added_date                      | title
+--------------------------------------+---------------------------------+-------------------
+ 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 | Cassandra History
+
+#similarly other rows
+cqlsh:killrvideo> select * from videos;
+
+ video_id                             | added_date                      | title
+--------------------------------------+---------------------------------+------------------------------
+ 245e8024-14bd-11e5-9743-8238356b7e32 | 2012-04-03 00:00:00.000000+0000 |             Cassandra & SSDs
+ 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 |              Cassandra Intro
+ 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2013-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
+ 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 |            Cassandra History
+ 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2013-10-16 00:00:00.000000+0000 |              DataStax Studio
+
+cqlsh:killrvideo> truncate videos;
+cqlsh:killrvideo> select * from videos;
+
+ video_id | added_date | title
+----------+------------+-------
+
+cqlsh:killrvideo> COPY videos(video_id, added_date, title)
+              ... FROM '/home/ubuntu/labwork/data-files/videos.csv'
+              ... WITH HEADER=TRUE;
+Using 1 child processes
+
+Starting copy of killrvideo.videos with columns [video_id, added_date, title].
+Processed: 5 rows; Rate:       7 rows/s; Avg. rate:      11 rows/s
+5 rows imported from 1 files in 0.449 seconds (0 skipped).
+
+cqlsh:killrvideo> select * from videos;
+
+ video_id                             | added_date                      | title
+--------------------------------------+---------------------------------+------------------------------
+ 245e8024-14bd-11e5-9743-8238356b7e32 | 2012-04-03 00:00:00.000000+0000 |             Cassandra & SSDs
+ 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 |              Cassandra Intro
+ 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2013-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
+ 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 |            Cassandra History
+ 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2013-10-16 00:00:00.000000+0000 |              DataStax Studio
+
+cqlsh:killrvideo> select count(*) from videos;
+
+ count
+-------
+     5
+
+(1 rows)
+
+Warnings :
+Aggregation query used without partition key
+
+
+#to view the partitioner token value for each video id
+cqlsh:killrvideo> SELECT token(video_id), video_id
+              ... FROM videos;
+
+#this CSV file categorizes the videos by one of two tags: cassandra or datastax.
+cat /home/ubuntu/labwork/data-files/videos-by-tag.csv
+tag,video id,added date,title
+cassandra,1645ea59-14bd-11e5-a993-8138354b7e31,2014-01-29,Cassandra History
+cassandra,245e8024-14bd-11e5-9743-8238356b7e32,2012-04-03,Cassandra & SSDs
+cassandra,3452f7de-14bd-11e5-855e-8738355b7e3a,2013-03-17,Cassandra Intro
+datastax,4845ed97-14bd-11e5-8a40-8338255b7e33,2013-10-16,DataStax Studio
+datastax,5645f8bd-14bd-11e5-af1a-8638355b8e3a,2013-04-16,What is DataStax Enterprise?
+
+cqlsh:killrvideo> create table videos_by_tag ( tag Text, video_id timeuuid, added_date timestamp, title text, Primary key ((tag),video_id));
+
+cqlsh:killrvideo> COPY videos_by_tag(tag, video_id, added_date, title) FROM '/home/ubuntu/labwork/data-files/videos-by-tag.csv' WITH HEADER = TRUE;
+Using 1 child processes
+
+Starting copy of killrvideo.videos_by_tag with columns [tag, video_id, added_date, title].
+Processed: 5 rows; Rate:       8 rows/s; Avg. rate:      12 rows/s
+5 rows imported from 1 files in 0.417 seconds (0 skipped).
+
+cqlsh:killrvideo> select * from videos_by_tag;
+
+ tag       | video_id                             | added_date                      | title
+-----------+--------------------------------------+---------------------------------+------------------------------
+  datastax | 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2013-10-16 00:00:00.000000+0000 |              DataStax Studio
+  datastax | 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2013-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
+ cassandra | 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 |            Cassandra History
+ cassandra | 245e8024-14bd-11e5-9743-8238356b7e32 | 2012-04-03 00:00:00.000000+0000 |             Cassandra & SSDs
+ cassandra | 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 |              Cassandra Intro
+
+(5 rows)
+
+cqlsh:killrvideo> describe videos_by_tag;
+
+CREATE TABLE killrvideo.videos_by_tag (
+    tag text,
+    video_id timeuuid,
+    added_date timestamp,
+    title text,
+    PRIMARY KEY (tag, video_id)
+) WITH CLUSTERING ORDER BY (video_id ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+cqlsh:killrvideo> select * from videos_by_tag where tag='datastax';
+
+ tag      | video_id                             | added_date                      | title
+----------+--------------------------------------+---------------------------------+------------------------------
+ datastax | 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2013-10-16 00:00:00.000000+0000 |              DataStax Studio
+ datastax | 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2013-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
+
+(2 rows)
+cqlsh:killrvideo> select * from videos_by_tag where tag='cassandra';
+
+ tag       | video_id                             | added_date                      | title
+-----------+--------------------------------------+---------------------------------+-------------------
+ cassandra | 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 | Cassandra History
+ cassandra | 245e8024-14bd-11e5-9743-8238356b7e32 | 2012-04-03 00:00:00.000000+0000 |  Cassandra & SSDs
+ cassandra | 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 |   Cassandra Intro
+
+(3 rows)
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Cannot execute this query as it might involve data filtering and thus may have unpredictable performance. If you want to execute this query despite the performance unpredictability, use ALLOW FILTERING"
+
+cqlsh:killrvideo> select * from videos_by_tag where title='Cassandra Intro' allow filtering;
+
+ tag       | video_id                             | added_date                      | title
+-----------+--------------------------------------+---------------------------------+-----------------
+ cassandra | 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 | Cassandra Intro
+
+(1 rows)
+
+
+cqlsh:killrvideo> exit;
+
+==============
+Another example:
+
+create keyspace Nprog with replication = {'class': 'SimpleStrategy','replication_factor':'1'};
+
+describe keyspaces;
+
+alter keyspace Nprog with replication = {'class': 'NetworkTopologyStrategy','replication_factor':'1'};
+
+drop keyspace Nprog;
+
+create table emp(
+emp_id int primary key,
+emp_name text,
+emp_city text,
+emp_sal varint,
+emp_phone varint);
+
+alter table emp add emp_mail text;
+
+alter table drop emp_sal;
+
+drop table emp;
+
+describe columnfamilies;
+
+#( deletes all rows of table)
+truncate emp;
+
+create index name on emp (emp_name);
+
+drop index name;
+
+#operations in batch
+begin batch
+insert into emp (emp_id,emp_name,emp_city,emp_sal,emp_phone) values 
+('10','aj','malmo','100','88776655');
+update emp set emp_sal = 5000 where emp_id = 10;
+delete emp_city from emp where emp_id = 2;
+apply batch;
+
+==============
+#Collection types i.e. set,list or map
+
+UDF/Tuple type
+--create a tuple
+create table subjects (
+k int primary key,
+v tuple<int, text, float>
+);
+
+--insert values
+insert into subjects (k,v)
+values (0,(3,'cs', 2.1));
+
+--retrieve
+select * from students;
+
+==============================
+>create keyspace testks3 with replication = {'class': 'NetworkTopologyStrategy', 'replication_factor': 3} and durable_writes= 'false';
+
+>use testks3;
+
+>create table bank(
+           serNo int,
+           age int,
+           job Text,
+           marital Text,
+           education Text,
+           defaulter Text,
+           balance int,
+           housing Text,
+           loan Text,
+           contact Text ,
+           day Text,
+           month Text,
+           duration int,
+           campaign Text,
+           pdays Text,
+           previous Text,
+           poutcome Text,y Text,
+           primary key (serNo));
+
+--insert data from a file
+>copy bank(serNo,age,job,marital,education,defaulter,balance,housing,loan,contact,day,month,duration,campaign,pdays,previous,poutcome,y) 
+ from '/home/hdu/Downloads/Bank_full.csv' with header=true;
+
+--if data is truncated using cqlsh
+> truncate bank;
+
+--then we see a truncated folder in data path
+ls /usr/local/cassandra/data/data/testks3/bank-2d3537808a1611ee89e209ca35cfe881/snapshots/
+truncated-1700754555616-bank
+
+--which shows one or more multiple SSTable files
+hdu@mh2:~/Cassandra/ApacheCassandra/Setup_exmp$ ls -all /usr/local/cassandra/data/data/testks3/bank-2d3537808a1611ee89e209ca35cfe881/snapshots/truncated-1700754555616-bank/
+total 4944
+drwxrwxr-x 2 hdu hdu    4096 Nov 23 16:49 .
+drwxrwxr-x 4 hdu hdu    4096 Nov 24 08:31 ..
+-rw-rw-r-- 1 hdu hdu     126 Nov 23 16:49 manifest.json
+-rw-rw-r-- 1 hdu hdu    2439 Nov 23 16:40 nb-1-big-CompressionInfo.db
+-rw-rw-r-- 1 hdu hdu 1744909 Nov 23 16:40 nb-1-big-Data.db
+-rw-rw-r-- 1 hdu hdu      10 Nov 23 16:40 nb-1-big-Digest.crc32
+-rw-rw-r-- 1 hdu hdu   48808 Nov 23 16:40 nb-1-big-Filter.db
+-rw-rw-r-- 1 hdu hdu  443900 Nov 23 16:40 nb-1-big-Index.db
+-rw-rw-r-- 1 hdu hdu   10943 Nov 23 16:40 nb-1-big-Statistics.db
+-rw-rw-r-- 1 hdu hdu    5172 Nov 23 16:40 nb-1-big-Summary.db
+-rw-rw-r-- 1 hdu hdu      92 Nov 23 16:40 nb-1-big-TOC.txt
+-rw-rw-r-- 1 hdu hdu    2423 Nov 23 16:41 nb-2-big-CompressionInfo.db
+-rw-rw-r-- 1 hdu hdu 1719295 Nov 23 16:41 nb-2-big-Data.db
+-rw-rw-r-- 1 hdu hdu      10 Nov 23 16:41 nb-2-big-Digest.crc32
+-rw-rw-r-- 1 hdu hdu   48504 Nov 23 16:41 nb-2-big-Filter.db
+-rw-rw-r-- 1 hdu hdu  437552 Nov 23 16:41 nb-2-big-Index.db
+-rw-rw-r-- 1 hdu hdu   10943 Nov 23 16:41 nb-2-big-Statistics.db
+-rw-rw-r-- 1 hdu hdu    5127 Nov 23 16:41 nb-2-big-Summary.db
+-rw-rw-r-- 1 hdu hdu      92 Nov 23 16:41 nb-2-big-TOC.txt
+-rw-rw-r-- 1 hdu hdu     567 Nov 23 16:49 nb-3-big-CompressionInfo.db
+-rw-rw-r-- 1 hdu hdu  391947 Nov 23 16:49 nb-3-big-Data.db
+-rw-rw-r-- 1 hdu hdu      10 Nov 23 16:49 nb-3-big-Digest.crc32
+-rw-rw-r-- 1 hdu hdu   10608 Nov 23 16:49 nb-3-big-Filter.db
+-rw-rw-r-- 1 hdu hdu   93104 Nov 23 16:49 nb-3-big-Index.db
+-rw-rw-r-- 1 hdu hdu   10943 Nov 23 16:49 nb-3-big-Statistics.db
+-rw-rw-r-- 1 hdu hdu    1181 Nov 23 16:49 nb-3-big-Summary.db
+-rw-rw-r-- 1 hdu hdu      92 Nov 23 16:49 nb-3-big-TOC.txt
+-rw-rw-r-- 1 hdu hdu    1169 Nov 23 16:49 schema.cql
+
+--if we drop table using cqlsh
+>drop table bank;
+
+hdu@mh2:~/Cassandra/ApacheCassandra/Setup_exmp$ ls /usr/local/cassandra/data/data/testks3/bank-2d3537808a1611ee89e209ca35cfe881/snapshots/
+dropped-1700811066661-bank  truncated-1700754555616-bank
+
+>select * from bank where serno > 1 allow filtering;
+>select * from bank where serno > 45210 allow filtering;
+
+>describe bank
+CREATE TABLE testks3.bank (
+    serno int PRIMARY KEY,
+    age int,
+    balance int,
+    campaign text,
+    contact text,
+    day text,
+    defaulter text,
+    duration int,
+    education text,
+    housing text,
+    job text,
+    loan text,
+    marital text,
+    month text,
+    pdays text,
+    poutcome text,
+    previous text,
+    y text
+) WITH additional_write_policy = '99p'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND memtable = 'default'
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+>ALTER TABLE bank
+ with caching = {
+    'keys' : 'ALL',
+    'rows_per_partition' : '5000'
+ };
+
+>describe bank
+
+--other option
+CREATE TABLE bank2(
+           serNo int,
+           age int,
+           job Text,
+           marital Text,
+           education Text,
+           defaulter Text,
+           balance int,
+           housing Text,
+           loan Text,
+           contact Text ,
+           day Text,
+           month Text,
+           duration int,
+           campaign Text,
+           pdays Text,
+           previous Text,
+           poutcome Text,y Text,
+           primary key ((serNo),age))
+ WITH CLUSTERING ORDER BY (age asc)
+and  compaction = {'class': 'SizeTieredCompactionStrategy'} 
+and gc_grace_seconds=86400
+and caching = { 'keys' : 'ALL', 'rows_per_partition':'5000' }
+and min_index_interval = 2
+and max_index_interval = 20;
+
+--load data
+
+>select * from bank2 where serno = 10 order by age ;
+>select * from bank2 where serno in (10,40,30,50,100);
+>select * from bank2 where age=43 allow filtering;
+
+Useful info:
+https://issues.apache.org/jira/browse/CASSANDRA-8646

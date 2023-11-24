@@ -1,0 +1,23 @@
+https://en.wikipedia.org/wiki/Distributed_hash_table
+https://en.wikipedia.org/wiki/MD5
+http://people.apache.org/~pquerna/cassandra_tokens.py
+How you calculate the ideal token distribution. 
+Cassandra’s ring is from 0 to 2**127 in size. 
+
+Using this python function, you can get a list of the ideal intiial tokens for a given cluster size of n:
+
+RING_SIZE = 2**127
+def tokens(n):
+  rv = []
+  for x in range(n): 
+    rv.append(RING_SIZE / n * x)
+  return rv
+
+For example, a 5 node cluster would output values like this:
+1:      0
+2:      34028236692093846346337460743176821145
+3:      68056473384187692692674921486353642290
+4:      102084710076281539039012382229530463435
+5:      136112946768375385385349842972707284580
+
+This means the second node in your cluster is responsible from a hash value of 0 to 34028236692093846346337460743176821145.
