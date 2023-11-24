@@ -1,4 +1,0 @@
-#Setting up cluster of 3 nodes
---refer 'InstallCassSN.txt' to setup nodes and how to setup cassandra on nodes
---refer configs and copy configs into each node respectively
---start cassandra on each node using 'cassandra -f' 
