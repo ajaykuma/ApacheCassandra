@@ -1,3 +1,3 @@
 # ApacheCassandra
 Working examples and notes - Apache Cassandra
->>>> Content is being reviewed & updated
+> 🚧 This repository is currently being refined and improved. Stay tuned!
