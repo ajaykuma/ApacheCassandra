@@ -1,190 +1,1077 @@
-#Kubectl and Minikube
---Install dependencies:
+GKE standard cluster setup
+-------------------
 
-sudo apt update && sudo apt upgrade -y
-sudo apt install curl apt-transport-https -y
+--in regional
+Connect to cloud shell
+gcloud container clusters get-credentials cluster-1 --zone us-central-1 --project cryptic-tower-477608-g6
 
---Install kubectl
-sudo snap install kubectl --classic
+--in zonal
+Configruation: 
+GKE version: 1.33.5-gke.1201000
+3 nodes
+Machine Type: n1-standard-4
+Image type: Ubuntu with containerd (ubuntu_containerd)
+Maximum pods per node: 25
 
-kubectl version --client
+----------------------------------------
+Connect to cloud shell
+gcloud container clusters get-credentials cluster-1 --zone us-central1-a --project cryptic-tower-477608-g6
 
-curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
-sudo install minikube-linux-amd64 /usr/local/bin/minikube
-rm minikube-linux-amd64
+ak7singhal@cloudshell:~ (cryptic-tower-477608-g6)$ kubectl get namespaces
+NAME                          STATUS   AGE
+default                       Active   10m
+gke-managed-cim               Active   9m21s
+gke-managed-system            Active   9m5s
+gke-managed-volumepopulator   Active   8m59s
+gmp-public                    Active   8m40s
+gmp-system                    Active   8m40s
+kube-node-lease               Active   10m
+kube-public                   Active   10m
+kube-system                   Active   10m
 
-sudo apt install docker.io
-sudo usermod -aG docker $USER && newgrp docke
-minikube start --memory=8192 --cpus=4
+ak7singhal@cloudshell:~ (cryptic-tower-477608-g6)$ kubectl get nodes -o wide -n default
+NAME                                       STATUS   ROLES    AGE     VERSION               INTERNAL-IP   EXTERNAL-IP       OS-IMAGE             KERNEL-VERSION   CONTAINER-RUNTIME
+gke-cluster-1-default-pool-a36610f4-3vr3   Ready    <none>   9m9s    v1.33.5-gke.1201000   10.128.0.13   34.121.132.79     Ubuntu 24.04.3 LTS   6.8.0-1037-gke   containerd://2.0.4
+gke-cluster-1-default-pool-a36610f4-hrgv   Ready    <none>   9m4s    v1.33.5-gke.1201000   10.128.0.16   34.173.182.94     Ubuntu 24.04.3 LTS   6.8.0-1037-gke   containerd://2.0.4
+gke-cluster-1-default-pool-be2ed74c-tf2q   Ready    <none>   9m10s   v1.33.5-gke.1201000   10.128.0.11   35.239.254.63     Ubuntu 24.04.3 LTS   6.8.0-1037-gke   containerd://2.0.4
+gke-cluster-1-default-pool-be2ed74c-z18l   Ready    <none>   9m9s    v1.33.5-gke.1201000   10.128.0.12   136.114.206.109   Ubuntu 24.04.3 LTS   6.8.0-1037-gke   containerd://2.0.4
+gke-cluster-1-default-pool-dc143d77-bq4p   Ready    <none>   9m4s    v1.33.5-gke.1201000   10.128.0.15   136.115.122.111   Ubuntu 24.04.3 LTS   6.8.0-1037-gke   containerd://2.0.4
+gke-cluster-1-default-pool-dc143d77-hqcg   Ready    <none>   9m6s    v1.33.5-gke.1201000   10.128.0.14   35.224.250.204    Ubuntu 24.04.3 LTS   6.8.0-1037-gke   containerd://2.0.4
 
-kubectl get nodes
+--if regional
+ak7singhal@cloudshell:~ (cryptic-tower-477608-g6)$ gcloud container node-pools list --cluster cluster-1 --region us-central1
+NAME: default-pool
+MACHINE_TYPE: n1-standard-2
+DISK_SIZE_GB: 32
+NODE_VERSION: 1.33.5-gke.1201000
 
-----------------
-Helm
-sudo snap install helm --classic
+--if zonal
+ak7singhal@cloudshell:~ (cryptic-tower-477608-g6)$ gcloud container node-pools list --cluster cluster-1 --region us-central1-a
+NAME: default-pool
+MACHINE_TYPE: n1-standard-4
+DISK_SIZE_GB: 32
+NODE_VERSION: 1.33.5-gke.1201000
 
-----------------
-K8ssandra
+--if regional
+ak7singhal@cloudshell:~ (cryptic-tower-477608-g6)$ kubectl get pods -A
+NAMESPACE         NAME                                                  READY   STATUS    RESTARTS   AGE
+gke-managed-cim   kube-state-metrics-0                                  2/2     Running   0          11m
+gmp-system        collector-ggkwk                                       2/2     Running   0          10m
+gmp-system        collector-h8qm8                                       2/2     Running   0          10m
+gmp-system        collector-kk59q                                       2/2     Running   0          10m
+gmp-system        collector-kqjt9                                       2/2     Running   0          10m
+gmp-system        collector-nqs7g                                       2/2     Running   0          10m
+gmp-system        collector-scm8r                                       2/2     Running   0          10m
+gmp-system        gmp-operator-848d89cfcb-smtzr                         1/1     Running   0          10m
+kube-system       event-exporter-gke-5746bc5dbd-gbfwp                   2/2     Running   0          10m
+kube-system       fluentbit-gke-2xwrj                                   3/3     Running   0          10m
+kube-system       fluentbit-gke-dbwhs                                   3/3     Running   0          10m
+kube-system       fluentbit-gke-frh8p                                   3/3     Running   0          10m
+kube-system       fluentbit-gke-nglvt                                   3/3     Running   0          10m
+kube-system       fluentbit-gke-ttcpk                                   3/3     Running   0          10m
+kube-system       fluentbit-gke-vvm5h                                   3/3     Running   0          10m
+kube-system       gke-metrics-agent-8jr46                               3/3     Running   0          10m
+kube-system       gke-metrics-agent-9hbkz                               3/3     Running   0          10m
+kube-system       gke-metrics-agent-g6b6l                               3/3     Running   0          10m
+kube-system       gke-metrics-agent-hx8pv                               3/3     Running   0          10m
+kube-system       gke-metrics-agent-jfwq6                               3/3     Running   0          10m
+kube-system       gke-metrics-agent-nb5qr                               3/3     Running   0          10m
+kube-system       konnectivity-agent-59f676f7df-4pzdh                   2/2     Running   0          10m
+kube-system       konnectivity-agent-59f676f7df-5jq4v                   2/2     Running   0          10m
+kube-system       konnectivity-agent-59f676f7df-82jnl                   2/2     Running   0          11m
+kube-system       konnectivity-agent-59f676f7df-pgkqx                   2/2     Running   0          10m
+kube-system       konnectivity-agent-59f676f7df-qcvx2                   2/2     Running   0          10m
+kube-system       konnectivity-agent-59f676f7df-wcnwl                   2/2     Running   0          10m
+kube-system       konnectivity-agent-autoscaler-6d9956645f-gms8f        1/1     Running   0          11m
+kube-system       kube-dns-7bf5cb79f7-dlcdh                             4/4     Running   0          10m
+kube-system       kube-dns-7bf5cb79f7-qrwp9                             4/4     Running   0          11m
+kube-system       kube-dns-autoscaler-5bf7f79bb4-x8k4n                  1/1     Running   0          11m
+kube-system       kube-proxy-gke-cluster-1-default-pool-a36610f4-3vr3   1/1     Running   0          10m
+kube-system       kube-proxy-gke-cluster-1-default-pool-a36610f4-hrgv   1/1     Running   0          10m
+kube-system       kube-proxy-gke-cluster-1-default-pool-be2ed74c-tf2q   1/1     Running   0          10m
+kube-system       kube-proxy-gke-cluster-1-default-pool-be2ed74c-z18l   1/1     Running   0          10m
+kube-system       kube-proxy-gke-cluster-1-default-pool-dc143d77-bq4p   1/1     Running   0          10m
+kube-system       kube-proxy-gke-cluster-1-default-pool-dc143d77-hqcg   1/1     Running   0          10m
+kube-system       l7-default-backend-78858cccc9-p2xnr                   1/1     Running   0          11m
+kube-system       metrics-server-v1.33.0-549f58f67d-jdhb5               1/1     Running   0          9m12s
+kube-system       pdcsi-node-42ldb                                      2/2     Running   0          10m
+kube-system       pdcsi-node-47ftx                                      2/2     Running   0          10m
+kube-system       pdcsi-node-6slfz                                      2/2     Running   0          10m
+kube-system       pdcsi-node-rsrhc                                      2/2     Running   0          10m
+kube-system       pdcsi-node-tw28k                                      2/2     Running   0          10m
+kube-system       pdcsi-node-w6fg4                                      2/2     Running   0          10m
 
-helm repo add jetstack https://charts.jetstack.io
+--if zonal
+kubectl get pods -A
+NAMESPACE         NAME                                                  READY   STATUS    RESTARTS   AGE
+gke-managed-cim   kube-state-metrics-0                                  2/2     Running   0          5m
+gmp-system        collector-9z8rr                                       2/2     Running   0          4m
+gmp-system        collector-rkjj4                                       2/2     Running   0          4m4s
+gmp-system        collector-vnlt6                                       2/2     Running   0          4m5s
+gmp-system        gmp-operator-75d6b548cd-vzzmd                         1/1     Running   0          4m16s
+kube-system       event-exporter-gke-799d67b586-znmvp                   2/2     Running   0          4m51s
+kube-system       fluentbit-gke-5lz22                                   3/3     Running   0          4m5s
+kube-system       fluentbit-gke-lhr9b                                   3/3     Running   0          4m
+kube-system       fluentbit-gke-xszv2                                   3/3     Running   0          4m3s
+kube-system       gke-metrics-agent-5nvvt                               3/3     Running   0          4m3s
+kube-system       gke-metrics-agent-kphlg                               3/3     Running   0          4m5s
+kube-system       gke-metrics-agent-qdt6f                               3/3     Running   0          3m59s
+kube-system       konnectivity-agent-796c464b89-2ckzc                   2/2     Running   0          4m31s
+kube-system       konnectivity-agent-796c464b89-rb74x                   2/2     Running   0          3m19s
+kube-system       konnectivity-agent-796c464b89-sdbm8                   2/2     Running   0          3m19s
+kube-system       konnectivity-agent-autoscaler-6d9956645f-wjfkg        1/1     Running   0          4m29s
+kube-system       kube-dns-6d49464f45-8zjql                             4/4     Running   0          3m21s
+kube-system       kube-dns-6d49464f45-t5ld9                             4/4     Running   0          5m7s
+kube-system       kube-dns-autoscaler-5bf7f79bb4-zdd7j                  1/1     Running   0          4m27s
+kube-system       kube-proxy-gke-cluster-1-default-pool-ac74de92-4d95   1/1     Running   0          3m35s
+kube-system       kube-proxy-gke-cluster-1-default-pool-ac74de92-gvv1   1/1     Running   0          3m31s
+kube-system       kube-proxy-gke-cluster-1-default-pool-ac74de92-trh5   1/1     Running   0          3m27s
+kube-system       l7-default-backend-78858cccc9-5xfpz                   1/1     Running   0          4m24s
+kube-system       metrics-server-v1.33.0-6b8795c6f6-kbv8x               1/1     Running   0          3m58s
+kube-system       pdcsi-node-plf8h                                      2/2     Running   0          3m59s
+kube-system       pdcsi-node-vhsjg                                      2/2     Running   0          3m58s
+kube-system       pdcsi-node-zqtlw                                      2/2     Running   0          3m58s
+
+Explaination:
+GKE automatically deploys a set of system components on each node for networking, logging, metrics, DNS, node agents, and Google-managed features.
+Since you have 3 nodes, any DaemonSet will create 3 pods (1 per node).
+Any Deployment may create multiple replicas, depending on the component.
+
+#DaemonSets → 1 Pod Per Node (3 Nodes → 3 Pods)
+These run one pod on every node
+
+Logging & Telemetry
+fluentbit-gke-* (3 pods)
+→ Collects logs from each node & sends to Cloud Logging.
+
+Metrics
+gke-metrics-agent-* (3 pods)
+→ Node-level metrics sent to Cloud Monitoring.
+
+PD CSI (Persistent Disk Driver)
+pdcsi-node-* (3 pods)
+→ Needed for PD volumes. Runs on every node.
+
+kube-proxy
+kube-proxy-gke-* (3 pods)
+→ Cluster networking, iptables rules, runs on each node.
+
+Konnectivity Agent
+konnectivity-agent-* (3 pods)
+→ Network tunnel for API server → nodes.
+
+#Deployments → Replicated for High Availability
+These run multiple replicas, not tied to node count:
+
+kube-dns (CoreDNS equivalent in GKE)
+kube-dns-* (2 pods)
+kube-dns-autoscaler-* (1 pod)
+
+GKE deploys DNS as a Deployment with 2 or no replica
+metrics-server
+metrics-server-v1.33.0-* (1 pod)
+
+GKE usually runs 2 replicas for HA.
+konnectivity-agent-autoscaler
+konnectivity-agent-autoscaler-* (1 pod)
+
+gmp-system & gke-managed-cim
+
+These belong to Google Managed Service for Prometheus (GMP):
+collector-* (3 pods) → DaemonSet
+gmp-operator-* (1 pod) → Deployment
+kube-state-metrics-* (1–2 pods) → Deployment
+
+These get installed automatically if you enabled Cloud Monitoring with managed collection.
+
+l7-default-backend
+
+l7-default-backend-* (1 pod)
+→ Used by GKE Ingress controller.
+
+#Install cert-manager
+ak7singhal@cloudshell:~ (cryptic-tower-477608-g6)$ helm repo add jetstack https://charts.jetstack.io
 helm repo update
-helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.13.2 \
+  --set installCRDs=true
+
+--output---
+"jetstack" has been added to your repositories
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "jetstack" chart repository
+Update Complete. ⎈Happy Helming!⎈
+
+NAME: cert-manager
+LAST DEPLOYED: Sat Nov 29 21:16:56 2025
+NAMESPACE: cert-manager
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+cert-manager v1.13.2 has been deployed successfully!
+
+In order to begin issuing certificates, you will need to set up a ClusterIssuer
+or Issuer resource (for example, by creating a 'letsencrypt-staging' issuer).
+
+More information on the different types of issuers and how to configure them
+can be found in our documentation:
+
+https://cert-manager.io/docs/configuration/
+
+For information on how to configure cert-manager to automatically provision
+Certificates for Ingress resources, take a look at the `ingress-shim`
+documentation:
+
+https://cert-manager.io/docs/usage/ingress/
+
+--output ends--
+
+ak7singhal@cloudshell:~ (cryptic-tower-477608-g6)$ kubectl get pods -n cert-manager
+NAME                                       READY   STATUS    RESTARTS   AGE
+cert-manager-597f9759f-d7v8w               1/1     Running   0          118s
+cert-manager-cainjector-6dc4d85566-xjwcs   1/1     Running   0          118s
+cert-manager-webhook-6787b9c856-8xtcl      1/1     Running   0          118s
+
+--if cleanup needed---
+--delete Helm release
+helm uninstall cert-manager -n cert-manager
+
+--Delete any leftover CRDs
+kubectl delete crd -l app.kubernetes.io/name=cert-manager
+
+--reinstall
+helm install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.13.2 \
+  --set installCRDs=true
+
+---cleanup complete---
+#Install K8ssandra Operator
 
 helm repo add k8ssandra https://helm.k8ssandra.io/
 helm repo update
-helm install k8ssandra-operator k8ssandra/k8ssandra-operator --namespace k8ssandra-operator --create-namespace
 
+helm install k8ssandra-operator k8ssandra/k8ssandra-operator \
+  --namespace k8ssandra-operator \
+  --create-namespace
 
---once operator is running
-k8ssandraCluster YAML
+---output---
+"k8ssandra" has been added to your repositories
+Hang tight while we grab the latest from your chart repositories...
+...Successfully got an update from the "jetstack" chart repository
+...Successfully got an update from the "k8ssandra" chart repository
+Update Complete. ⎈Happy Helming!⎈
+NAME: k8ssandra-operator
+LAST DEPLOYED: Sat Nov 29 21:20:36 2025
+NAMESPACE: k8ssandra-operator
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+
+----output ends-----
+
+kubectl get pods -n k8ssandra-operator
+
+kubectl get pods -n k8ssandra-operator
+NAME                                                READY   STATUS    RESTARTS   AGE
+k8ssandra-operator-7776cd85b4-9m6tj                 1/1     Running   0          53s
+k8ssandra-operator-cass-operator-76db5985c7-j88cd   1/1     Running   0          53s
+
+ak7singhal@cloudshell:~ (cryptic-tower-477608-g6)$ kubectl get storageclass
+NAME                     PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+premium-rwo              pd.csi.storage.gke.io   Delete          WaitForFirstConsumer   true                   24m
+standard                 kubernetes.io/gce-pd    Delete          Immediate              true                   24m
+standard-rwo (default)   pd.csi.storage.gke.io   Delete          WaitForFirstConsumer   true                   24m
+
+mkdir k8ssandra
+
+cd k8ssandra
+
+vi k8ssandra.yaml
+
 apiVersion: k8ssandra.io/v1alpha1
 kind: K8ssandraCluster
 metadata:
   name: k8ssandra-example
-spec:
-  cassandra:
-    version: 4.0.11 # Specify a supported Cassandra version
-    datacenter:
-      name: dc1
-      racks:
-        - name: default
-      size: 3 # Number of Cassandra nodes
-      storageConfig:
-        cassandraDataVolume:
-          storageClassName: standard # Use your cluster's appropriate storage class
-          size: 10Gi
-      config:
-        # Optional: You can specify additional cassandra.yaml properties here
-        # num_tokens: 256
-  # Optional: Include other components like Stargate, Reaper, Medusa
-  # stargate:
-  #   size: 1
-  #   replicas: 1
-
-or
-
-apiVersion: k8ssandra.io/v1alpha1
-kind: K8ssandraCluster
-metadata:
-  name: k8ssandra
   namespace: k8ssandra-operator
 spec:
   cassandra:
-    serverVersion: "4.1.3"
+    serverType: cassandra
+    serverVersion: "4.0.11"
     datacenters:
       - metadata:
           name: dc1
-        size: 1
+        size: 3
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+
+        racks:
+          - name: default
+
         storageConfig:
           cassandraDataVolumeClaimSpec:
+            storageClassName: standard-rwo
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
-                storage: 5Gi
+                storage: 10Gi
+
         config:
           cassandraYaml:
-            authenticator: PasswordAuthenticator
-
-or
-
-apiVersion: k8ssandra.io/v1alpha1
-kind: K8ssandraCluster
-metadata:
-  name: k8ssandra
-  namespace: k8ssandra-operator
-spec:
-  cassandra:
-    clusterName: dc1
-    datacenters:
-      - metadata:
-          name: dc1
-        size: 1
-        config:
-          cassandraYaml:
-            authenticator: PasswordAuthenticator
-            authorizer: CassandraAuthorizer
+            memtable_allocation_type: heap_buffers
           jvmOptions:
-            heapSize: 512M
-            heapNewGenSize: 256M
-        podTemplateSpec:
-          spec:
-            containers:
-              - name: cassandra
-                resources:
-                  limits:
-                    memory: "2Gi"
-                  requests:
-                    memory: "1Gi"
+            heapSize: "2Gi"
+            heapNewGenSize: "512Mi"
 
 
-kubectl apply -f k8ssandraCluster.yaml -n k8ssandra-operator
+kubectl apply -f k8ssandra.yaml 
+k8ssandracluster.k8ssandra.io/k8ssandra-example created
 
-kubectl get k8ssandracluster -n k8ssandra-operator
+kubectl get cassdc -n k8ssandra-operator
+NAME   AGE
+dc1    34s
 
-========================================================================
-K8ssandra Works Internally:
+--watch pods coming up
+kubectl get pods -n k8ssandra-operator -w
 
-> Install via Helm
-  You deploy K8ssandra with a single Helm chart
+kubectl get pods -n k8ssandra-operator -w
+NAME                                                READY   STATUS    RESTARTS   AGE
+k8ssandra-example-dc1-default-sts-0                 2/2     Running   0          18m
+k8ssandra-example-dc1-default-sts-1                 2/2     Running   0          18m
+k8ssandra-example-dc1-default-sts-2                 0/2     Pending   0          90s
+k8ssandra-operator-7776cd85b4-9m6tj                 1/1     Running   0          23m
+k8ssandra-operator-cass-operator-76db5985c7-j88cd   1/1     Running   0          23m
 
-helm repo add k8ssandra https://helm.k8ssandra.io/
-helm install my-k8s k8ssandra/k8ssandra
+Issue with 3rd POD, can be seen
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl describe pod k8ssandra-example-dc1-default-sts-2 -n k8ssandra-operator
+Name:             k8ssandra-example-dc1-default-sts-2
+Namespace:        k8ssandra-operator
+Priority:         0
+Service Account:  default
+Node:             <none>
+Labels:           app.kubernetes.io/created-by=cass-operator
+                  app.kubernetes.io/instance=cassandra-k8ssandra-example
+                  app.kubernetes.io/managed-by=cass-operator
+                  app.kubernetes.io/name=cassandra
+                  app.kubernetes.io/version=4.0.11
+                  apps.kubernetes.io/pod-index=2
+                  cassandra.datastax.com/cluster=k8ssandra-example
+                  cassandra.datastax.com/datacenter=dc1
+                  cassandra.datastax.com/node-state=Ready-to-Start
+                  cassandra.datastax.com/rack=default
+                  controller-revision-hash=k8ssandra-example-dc1-default-sts-7d7f6f5fdd
+                  statefulset.kubernetes.io/pod-name=k8ssandra-example-dc1-default-sts-2
+Annotations:      cloud.google.com/cluster_autoscaler_unhelpable_since: 2025-11-29T21:43:13+0000
+                  cloud.google.com/cluster_autoscaler_unhelpable_until: Inf
+Status:           Pending
+IP:               
+IPs:              <none>
+Controlled By:    StatefulSet/k8ssandra-example-dc1-default-sts
+Init Containers:
+  server-config-init:
+    Image:      docker.io/datastax/cass-config-builder:1.0-ubi
+    Port:       <none>
+    Host Port:  <none>
+    Limits:
+      cpu:     1
+      memory:  384M
+    Requests:
+      cpu:     1
+      memory:  256M
+    Environment:
+      POD_IP:                      (v1:status.podIP)
+      HOST_IP:                     (v1:status.hostIP)
+      USE_HOST_IP_FOR_BROADCAST:  false
+      RACK_NAME:                  default
+      PRODUCT_VERSION:            4.0.11
+      PRODUCT_NAME:               cassandra
+      POD_NAME:                   k8ssandra-example-dc1-default-sts-2 (v1:metadata.name)
+      CONFIG_FILE_DATA:           {"cassandra-env-sh":{"additional-jvm-opts":["-Dcassandra.allow_alter_rf_during_range_movement=true","-Dcassandra.system_distributed_replication=dc1:3"]},"cassandra-yaml":{"authenticator":"PasswordAuthenticator","authorizer":"CassandraAuthorizer","memtable_allocation_type":"heap_buffers","num_tokens":16,"role_manager":"CassandraRoleManager"},"cluster-info":{"name":"k8ssandra-example","seeds":"k8ssandra-example-seed-service,k8ssandra-example-dc1-additional-seed-service"},"datacenter-info":{"graph-enabled":0,"name":"dc1","solr-enabled":0,"spark-enabled":0},"jvm-server-options":{"initial_heap_size":2147483648,"max_heap_size":2147483648},"jvm11-server-options":{"garbage_collector":"G1GC"}}
+    Mounts:
+      /config from server-config (rw)
+      /opt/management-api/configs from metrics-agent-config (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-9wjn2 (ro)
+Containers:
+  cassandra:
+    Image:       docker.io/k8ssandra/cass-management-api:4.0.11-ubi
+    Ports:       9042/TCP, 9142/TCP, 7000/TCP, 7001/TCP, 7199/TCP, 8080/TCP, 9103/TCP, 9000/TCP
+    Host Ports:  0/TCP, 0/TCP, 0/TCP, 0/TCP, 0/TCP, 0/TCP, 0/TCP, 0/TCP
+    Limits:
+      cpu:     2
+      memory:  4Gi
+    Requests:
+      cpu:      2
+      memory:   4Gi
+    Liveness:   http-get http://:8080/api/v0/probes/liveness delay=15s timeout=10s period=15s #success=1 #failure=3
+    Readiness:  http-get http://:8080/api/v0/probes/readiness delay=20s timeout=10s period=10s #success=1 #failure=3
+    Environment:
+      METRIC_FILTERS:           deny:org.apache.cassandra.metrics.Table deny:org.apache.cassandra.metrics.table allow:org.apache.cassandra.metrics.table.live_ss_table_count allow:org.apache.cassandra.metrics.Table.LiveSSTableCount allow:org.apache.cassandra.metrics.table.live_disk_space_used allow:org.apache.cassandra.metrics.table.LiveDiskSpaceUsed allow:org.apache.cassandra.metrics.Table.Pending allow:org.apache.cassandra.metrics.Table.Memtable allow:org.apache.cassandra.metrics.Table.Compaction allow:org.apache.cassandra.metrics.table.read allow:org.apache.cassandra.metrics.table.write allow:org.apache.cassandra.metrics.table.range allow:org.apache.cassandra.metrics.table.coordinator allow:org.apache.cassandra.metrics.table.dropped_mutations
+      POD_NAME:                 k8ssandra-example-dc1-default-sts-2 (v1:metadata.name)
+      NODE_NAME:                 (v1:spec.nodeName)
+      DS_LICENSE:               accept
+      USE_MGMT_API:             true
+      MGMT_API_NO_KEEP_ALIVE:   true
+      MGMT_API_EXPLICIT_START:  true
+    Mounts:
+      /config from server-config (rw)
+      /opt/management-api/configs from metrics-agent-config (rw)
+      /tmp from tmp (rw)
+      /var/lib/cassandra from server-data (rw)
+      /var/log/cassandra from server-logs (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-9wjn2 (ro)
+  server-system-logger:
+    Image:      docker.io/k8ssandra/system-logger:v1.28.0
+    Port:       <none>
+    Host Port:  <none>
+    Limits:
+      memory:  128M
+    Requests:
+      cpu:     100m
+      memory:  64M
+    Environment:
+      POD_NAME:         k8ssandra-example-dc1-default-sts-2 (v1:metadata.name)
+      NODE_NAME:         (v1:spec.nodeName)
+      CLUSTER_NAME:     k8ssandra-example
+      DATACENTER_NAME:  dc1
+      RACK_NAME:         (v1:metadata.labels['cassandra.datastax.com/rack'])
+      NAMESPACE:        k8ssandra-operator (v1:metadata.namespace)
+    Mounts:
+      /opt/management-api/configs from metrics-agent-config (rw)
+      /var/lib/vector from vector-lib (rw)
+      /var/log/cassandra from server-logs (rw)
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-9wjn2 (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False 
+Volumes:
+  server-data:
+    Type:       PersistentVolumeClaim (a reference to a PersistentVolumeClaim in the same namespace)
+    ClaimName:  server-data-k8ssandra-example-dc1-default-sts-2
+    ReadOnly:   false
+  server-config:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  server-logs:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  tmp:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  vector-lib:
+    Type:       EmptyDir (a temporary directory that shares a pod's lifetime)
+    Medium:     
+    SizeLimit:  <unset>
+  metrics-agent-config:
+    Type:      ConfigMap (a volume populated by a ConfigMap)
+    Name:      k8ssandra-example-dc1-metrics-agent-config
+    Optional:  false
+  kube-api-access-9wjn2:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason             Age    From                Message
+  ----     ------             ----   ----                -------
+  Warning  FailedScheduling   4m34s  default-scheduler   0/6 nodes are available: 1 Too many pods, 6 Insufficient cpu. preemption: 0/6 nodes are available: 6 No preemption victims found for incoming pod.
+  Normal   NotTriggerScaleUp  4m35s  cluster-autoscaler  Pod didn't trigger scale-up:
 
-> Operator Launch
+--to delete setup
+kubectl delete k8ssandracluster k8ssandra-example -n k8ssandra-operator
 
-  The Helm chart installs:
-  - cass-operator
-  - Stargate
-  - Reaper
-  - Medusa
-  - Monitoring stack
-
-> cass-operator Creates Cassandra Cluster
-
-  The operator creates:
-
-  - StatefulSet for each Cassandra rack
-  - PersistentVolumeClaims for data
-  - Services for gossip, CQL, and JMX
-
-  It ensures:
-    --Seed nodes are configured
-    --Nodes join the ring correctly
-    --Rolling upgrades happen safely
-
-> Services Layer Starts (Stargate)
-
-  Stargate nodes connect to Cassandra and provide easy-to-use APIs.
-
-> Automated Ops Kick In
-
-  Reaper sets up scheduled repairs
-  Prometheus begins scraping metrics
-  Medusa configures backup schedules
-  K8ssandra now runs and maintains itself with minimal intervention.
-
-> Multi-Datacenter and Multi-Region Support
-
-  K8ssandra supports:
-
-  Multi-DC Cassandra clusters
-  Topologies across AZs or cloud regions
-  Automated rack awareness
-
-  This is especially useful for production-grade, globally distributed deployments.
-
-Benefits of Using K8ssandra
-
--- Fully automated Cassandra on Kubernetes
--- Developer-friendly APIs via Stargate
--- Easy scaling using kubectl
--- Automated repairs and backups
--- Cloud-agnostic (EKS, AKS, GKE, on-prem, etc.)
--- Production-ready right out of the box
-
---------------------------------------
+----------------
+changing node or pod configuration and then testing again
+check if kubectl Is Pointing to the Correct Cluster
+kubectl config current-context
+kubectl config get-contexts
 
 
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl get pods -A
+NAMESPACE            NAME                                                  READY   STATUS    RESTARTS   AGE
+cert-manager         cert-manager-597f9759f-fcwgm                          1/1     Running   0          10m
+cert-manager         cert-manager-cainjector-6dc4d85566-6k74v              1/1     Running   0          10m
+cert-manager         cert-manager-webhook-6787b9c856-c6kg9                 1/1     Running   0          10m
+gke-managed-cim      kube-state-metrics-0                                  2/2     Running   0          53m
+gmp-system           collector-9z8rr                                       2/2     Running   0          52m
+gmp-system           collector-rkjj4                                       2/2     Running   0          52m
+gmp-system           collector-vnlt6                                       2/2     Running   0          52m
+gmp-system           gmp-operator-75d6b548cd-vzzmd                         1/1     Running   0          52m
+k8ssandra-operator   k8ssandra-example-dc1-default-sts-0                   2/2     Running   0          5m56s
+k8ssandra-operator   k8ssandra-example-dc1-default-sts-1                   2/2     Running   0          5m56s
+k8ssandra-operator   k8ssandra-example-dc1-default-sts-2                   2/2     Running   0          5m56s
+k8ssandra-operator   k8ssandra-operator-7776cd85b4-5hv4g                   1/1     Running   0          7m35s
+k8ssandra-operator   k8ssandra-operator-cass-operator-76db5985c7-5j95l     1/1     Running   0          7m35s
+kube-system          event-exporter-gke-799d67b586-znmvp                   2/2     Running   0          52m
+kube-system          fluentbit-gke-5lz22                                   3/3     Running   0          52m
+kube-system          fluentbit-gke-lhr9b                                   3/3     Running   0          52m
+kube-system          fluentbit-gke-xszv2                                   3/3     Running   0          52m
+kube-system          gke-metrics-agent-5nvvt                               3/3     Running   0          52m
+kube-system          gke-metrics-agent-kphlg                               3/3     Running   0          52m
+kube-system          gke-metrics-agent-qdt6f                               3/3     Running   0          51m
+kube-system          konnectivity-agent-796c464b89-2ckzc                   2/2     Running   0          52m
+kube-system          konnectivity-agent-796c464b89-rb74x                   2/2     Running   0          51m
+kube-system          konnectivity-agent-796c464b89-sdbm8                   2/2     Running   0          51m
+kube-system          konnectivity-agent-autoscaler-6d9956645f-wjfkg        1/1     Running   0          52m
+kube-system          kube-dns-6d49464f45-8zjql                             4/4     Running   0          51m
+kube-system          kube-dns-6d49464f45-t5ld9                             4/4     Running   0          53m
+kube-system          kube-dns-autoscaler-5bf7f79bb4-zdd7j                  1/1     Running   0          52m
+kube-system          kube-proxy-gke-cluster-1-default-pool-ac74de92-4d95   1/1     Running   0          51m
+kube-system          kube-proxy-gke-cluster-1-default-pool-ac74de92-gvv1   1/1     Running   0          51m
+kube-system          kube-proxy-gke-cluster-1-default-pool-ac74de92-trh5   1/1     Running   0          51m
+kube-system          l7-default-backend-78858cccc9-5xfpz                   1/1     Running   0          52m
+kube-system          metrics-server-v1.33.0-6b8795c6f6-kbv8x               1/1     Running   0          51m
+kube-system          pdcsi-node-plf8h                                      2/2     Running   0          51m
+kube-system          pdcsi-node-vhsjg                                      2/2     Running   0          51m
+kube-system          pdcsi-node-zqtlw                                      2/2     Running   0          51m
 
+-----------------------------------------
+--check in total how many pods are scheduled
+kubectl get pods -A | wc -l
+36
+
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ gcloud container clusters describe cluster-1 --region us-central1-a --format="value(autopilot.enabled)"
+If output is true → It's Autopilot
+
+--Check Check CassandraDatacenter status
+ kubectl get cassandradatacenters -n k8ssandra-operator
+NAME   AGE
+dc1    33m
+
+--Get the superuser credentials
+--K8ssandra generates a superuser secret automatically. (<cluster-name>-<datacenter-name>-superuser)
+since we have
+k8ssandra-operator   k8ssandra-example-dc1-default-sts-0
+k8ssandra-operator   k8ssandra-example-dc1-default-sts-1
+k8ssandra-operator   k8ssandra-example-dc1-default-sts-2
+
+To connect with cqlsh, we need the superuser username and password created by the operator.
+
+--Get all secrets
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl get secrets -n k8ssandra-operator
+NAME                                                   TYPE                                  DATA   AGE
+k8ssandra-example-superuser                            Opaque                                2      37m
+k8ssandra-operator-cass-operator-webhook-server-cert   kubernetes.io/tls                     3      38m
+k8ssandra-operator-token                               kubernetes.io/service-account-token   3      38m
+k8ssandra-operator-webhook-server-cert                 kubernetes.io/tls                     3      38m
+sh.helm.release.v1.k8ssandra-operator.v1               helm.sh/release.v1                    1      38m
+
+
+kubectl get secret k8ssandra-example-superuser -n k8ssandra-operator -o jsonpath="{.data.username}" | base64 --decode && echo
+kubectl get secret k8ssandra-example-superuser -n k8ssandra-operator -o jsonpath="{.data.password}" | base64 --decode && echo
+k8ssandra-example-superuser
+qgoMyT8hVp4eDFHyQcZ0
+
+--connect to any pod, for example
+kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- \
+cqlsh -u k8ssandra-example-superuser -p qgoMyT8hVp4eDFHyQcZ0
+
+cqlsh>
+
+--or externally using port forwarding
+kubectl port-forward svc/k8ssandra-example-dc1-service -n k8ssandra-operator 9042:9042
+cqlsh localhost 9042 -u k8ssandra-example-superuser -p qgoMyT8hVp4eDFHyQcZ0
+Forwarding from 127.0.0.1:9042 -> 9042
+
+& from new terminal
+cqlsh localhost 9042 -u k8ssandra-example-superuser -p qgoMyT8hVp4eDFHyQcZ0
+cqlsh>
+
+k8ssandra-example-superuser@cqlsh> describe keyspaces;
+
+system       system_distributed  system_traces  system_virtual_schema
+system_auth  system_schema       system_views 
+
+k8ssandra-example-superuser@cqlsh> use system;
+
+k8ssandra-example-superuser@cqlsh:system> DESCRIBE KEYSPACE system;
+
+k8ssandra-example-superuser@cqlsh:system> describe tables;
+
+available_ranges     paxos                size_estimates         
+available_ranges_v2  peer_events          sstable_activity       
+batches              peer_events_v2       table_estimates        
+built_views          peers                transferred_ranges     
+compaction_history   peers_v2             transferred_ranges_v2  
+"IndexInfo"          prepared_statements  view_builds_in_progress
+local                repairs            
+
+k8ssandra-example-superuser@cqlsh:system> describe table paxos;
+
+CREATE TABLE system.paxos (
+    row_key blob,
+    cf_id uuid,
+    in_progress_ballot timeuuid,
+    most_recent_commit blob,
+    most_recent_commit_at timeuuid,
+    most_recent_commit_version int,
+    proposal blob,
+    proposal_ballot timeuuid,
+    proposal_version int,
+    PRIMARY KEY (row_key, cf_id)
+) WITH CLUSTERING ORDER BY (cf_id ASC)
+    AND additional_write_policy = '99p'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = 'in-progress paxos proposals'
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 0
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 3600000
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+--CRUD
+k8ssandra-example-superuser@cqlsh> CREATE KEYSPACE myks
+   ... WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+k8ssandra-example-superuser@cqlsh> describe keyspaces;
+
+myks    system_auth         system_schema  system_views         
+system  system_distributed  system_traces  system_virtual_schema
+
+k8ssandra-example-superuser@cqlsh> use myks;
+
+k8ssandra-example-superuser@cqlsh:myks> CREATE TABLE users (
+        ...     id UUID PRIMARY KEY,
+        ...     name text,
+        ...     email text
+        ... );
+k8ssandra-example-superuser@cqlsh:myks> describe tables;
+users
+
+k8ssandra-example-superuser@cqlsh:myks> INSERT INTO users (id, name, email)
+        ... VALUES (uuid(), 'Alice', 'alice@example.com');
+
+k8ssandra-example-superuser@cqlsh:myks> SELECT * FROM users;
+
+ id                                   | email             | name
+--------------------------------------+-------------------+-------
+ 0e6f9653-c2dc-4b7d-8175-6dd1193eae44 | alice@example.com | Alice
+
+(1 rows)
+
+k8ssandra-example-superuser@cqlsh:myks> UPDATE users SET email='new@example.com' WHERE id=0e6f9653-c2dc-4b7d-8175-6dd1193eae44;
+k8ssandra-example-superuser@cqlsh:myks> SELECT * FROM users;
+
+ id                                   | email           | name
+--------------------------------------+-----------------+-------
+ 0e6f9653-c2dc-4b7d-8175-6dd1193eae44 | new@example.com | Alice
+
+--delete if needed
+DELETE FROM users WHERE id=some_uuid;
+
+--User & Role management
+CREATE ROLE ...
+ALTER ROLE ...
+DROP ROLE ...
+LIST ROLES;
+GRANT ... TO ...
+REVOKE ... FROM ...
+
+are cluster wide& not associated with any specific keyspaces.
+
+k8ssandra-example-superuser@cqlsh:myks> list roles;
+
+ role                        | super | login | options | datacenters
+-----------------------------+-------+-------+---------+-------------
+                   cassandra | False | False |        {} |         ALL
+ k8ssandra-example-superuser |  True |  True |        {} |         ALL
+
+k8ssandra-example-superuser@cqlsh:system> CREATE ROLE myuser WITH PASSWORD='mypassword' AND LOGIN = true;
+k8ssandra-example-superuser@cqlsh:system> list roles;
+
+ role                        | super | login | options | datacenters
+-----------------------------+-------+-------+---------+-------------
+                   cassandra | False | False |        {} |         ALL
+ k8ssandra-example-superuser |  True |  True |        {} |         ALL
+                      myuser | False |  True |        {} |         ALL
+
+GRANT ALL PERMISSIONS ON KEYSPACE myks TO myuser;
+
+--Cluster related info
+k8ssandra-example-superuser@cqlsh:system> describe cluster;
+
+Cluster: k8ssandra-example
+Partitioner: Murmur3Partitioner
+Snitch: DynamicEndpointSnitch
+
+k8ssandra-example-superuser@cqlsh:system> DESCRIBE SCHEMA;
+
+CREATE KEYSPACE myks WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  AND durable_writes = true;
+
+CREATE TABLE myks.users (
+    id uuid PRIMARY KEY,
+    email text,
+    name text
+) WITH additional_write_policy = '99p'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+--Monitoring commands
+
+kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool status
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+Datacenter: dc1
+===============
+Status=Up/Down
+|/ State=Normal/Leaving/Joining/Moving
+--  Address      Load       Tokens  Owns (effective)  Host ID                               Rack   
+UN  10.76.0.134  96.41 KiB  16      32.7%             9cc99d06-b6c0-458a-8b6b-0c9662734ff1  default
+UN  10.76.0.73   96.33 KiB  16      35.7%             49d3c510-dd01-4f5f-a090-c1f56c3e8fac  default
+UN  10.76.0.13   96.42 KiB  16      31.6%             56286115-9538-433a-b5e3-9b1abf0bf096  default
+
+
+kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool info
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+ID                     : 49d3c510-dd01-4f5f-a090-c1f56c3e8fac
+Gossip active          : true
+Native Transport active: true
+Load                   : 96.33 KiB
+Generation No          : 1764613217
+Uptime (seconds)       : 3283
+Heap Memory (MB)       : 506.80 / 2048.00
+Off Heap Memory (MB)   : 0.00
+Data Center            : dc1
+Rack                   : default
+Exceptions             : 0
+Key Cache              : entries 14, size 1.2 KiB, capacity 100 MiB, 105 hits, 125 requests, 0.840 recent hit rate, 14400 save period in seconds
+Row Cache              : entries 0, size 0 bytes, capacity 0 bytes, 0 hits, 0 requests, NaN recent hit rate, 0 save period in seconds
+Counter Cache          : entries 0, size 0 bytes, capacity 50 MiB, 0 hits, 0 requests, NaN recent hit rate, 7200 save period in seconds
+Network Cache          : size 8 MiB, overflow size: 0 bytes, capacity 128 MiB
+Percent Repaired       : 0.0%
+Token                  : (invoke with -T/--tokens to see all 16 tokens)
+
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool ring
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+
+Datacenter: dc1
+==========
+Address           Rack        Status State   Load            Owns                Token                                       
+                                                                                 9045508340790370343                         
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -9150246304856053623                        
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              -8731568621945364064                        
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              -8283997282047483676                        
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -7981291381677039242                        
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              -7488048616264772090                        
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -6932167581347848153                        
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              -6520684373186236591                        
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -5996254408556332733                        
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -5580616748984692853                        
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              -5212273557357917535                        
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              -4930679820672337953                        
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -4368936402312711708                        
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -3971613549963998917                        
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              -3579792593353653484                        
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              -3311656524975294656                        
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              -2946808769880519360                        
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -2713192834018555829                        
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              -2333511072459180581                        
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              -1968917913487030697                        
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -1678892187343151463                        
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              -1252605686062022073                        
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              -821594205131353989                         
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              -554876771635593452                         
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              -154663456210413154                         
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              97596140512655809                           
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              541165128599344836                          
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              902893228479635403                          
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              1154972657441614026                         
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              1632462239291557095                         
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              2145331543159767555                         
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              2476838886782718852                         
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              2972177999897880825                         
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              3276667557443849134                         
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              3636686702075138899                         
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              3917107116685302090                         
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              4298818208377380135                         
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              4535088148587502167                         
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              4988607733025334903                         
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              5361170608047731675                         
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              5599429138360565564                         
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              6006459137767761918                         
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              6499297147437626667                         
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              6824131070380112713                         
+10.76.0.13        default     Up     Normal  96.42 KiB       31.64%              7419433439340511963                         
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              7899886951605692252                         
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              8331212876392709350                         
+10.76.0.134       default     Up     Normal  96.41 KiB       32.65%              8635802644316585893                         
+10.76.0.73        default     Up     Normal  96.33 KiB       35.71%              9045508340790370343                         
+
+  Warning: "nodetool ring" is used to output all the tokens of a node.
+  To view status related info of a node use "nodetool status" instead.
+
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool tpstats
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+Pool Name                    Active Pending Completed Blocked All time blocked
+RequestResponseStage         0      0       110       0       0               
+MutationStage                0      0       16        0       0               
+ReadStage                    0      0       483       0       0               
+CompactionExecutor           0      0       2059      0       0               
+MemtableReclaimMemory        0      0       23        0       0               
+PendingRangeCalculator       0      0       6         0       0               
+GossipStage                  0      0       10080     0       0               
+SecondaryIndexManagement     0      0       0         0       0               
+HintsDispatcher              0      0       0         0       0               
+MigrationStage               0      0       8         0       0               
+MemtablePostFlush            0      0       39        0       0               
+PerDiskMemtableFlushWriter_0 0      0       21        0       0               
+ValidationExecutor           0      0       0         0       0               
+Sampler                      0      0       0         0       0               
+ViewBuildExecutor            0      0       0         0       0               
+MemtableFlushWriter          0      0       23        0       0               
+CacheCleanupExecutor         0      0       0         0       0               
+Native-Transport-Requests    0      0       153       0       0               
+
+Latencies waiting in queue (micros) per dropped message types
+Message type           Dropped     50%      95%      99%                Max               
+READ_RSP               0           0.0      0.0      0.0                0.0               
+RANGE_REQ              0           0.0      0.0      0.0                0.0               
+PING_REQ               0           0.0      0.0      0.0                0.0               
+_SAMPLE                0           0.0      0.0      0.0                0.0               
+VALIDATION_RSP         0           0.0      0.0      0.0                0.0               
+SCHEMA_PULL_RSP        0           0.0      0.0      0.0                0.0               
+SYNC_RSP               0           0.0      0.0      0.0                0.0               
+SCHEMA_VERSION_REQ     0           0.0      0.0      0.0                0.0               
+HINT_RSP               0           0.0      0.0      0.0                0.0               
+BATCH_REMOVE_RSP       0           0.0      0.0      0.0                0.0               
+PAXOS_COMMIT_REQ       0           0.0      0.0      0.0                0.0               
+SNAPSHOT_RSP           0           0.0      0.0      0.0                0.0               
+COUNTER_MUTATION_REQ   0           0.0      0.0      0.0                0.0               
+GOSSIP_DIGEST_SYN      0           1629.722 3379.391 4055.2690000000002 4055.2690000000002
+PAXOS_PREPARE_REQ      0           0.0      0.0      0.0                0.0               
+PREPARE_MSG            0           0.0      0.0      0.0                0.0               
+PAXOS_COMMIT_RSP       0           0.0      0.0      0.0                0.0               
+HINT_REQ               0           0.0      0.0      0.0                0.0               
+BATCH_REMOVE_REQ       0           0.0      0.0      0.0                0.0               
+STATUS_RSP             0           0.0      0.0      0.0                0.0               
+READ_REPAIR_RSP        0           0.0      0.0      0.0                0.0               
+GOSSIP_DIGEST_ACK2     0           1629.722 3379.391 3379.391           3379.391          
+CLEANUP_MSG            0           0.0      0.0      0.0                0.0               
+REQUEST_RSP            0           0.0      0.0      0.0                0.0               
+TRUNCATE_RSP           0           0.0      0.0      0.0                0.0               
+UNUSED_CUSTOM_VERB     0           0.0      0.0      0.0                0.0               
+REPLICATION_DONE_RSP   0           0.0      0.0      0.0                0.0               
+SNAPSHOT_REQ           0           0.0      0.0      0.0                0.0               
+ECHO_REQ               0           0.0      0.0      0.0                0.0               
+PREPARE_CONSISTENT_REQ 0           0.0      0.0      0.0                0.0               
+FAILURE_RSP            0           0.0      0.0      0.0                0.0               
+BATCH_STORE_RSP        0           0.0      0.0      0.0                0.0               
+SCHEMA_PUSH_RSP        0           0.0      0.0      0.0                0.0               
+MUTATION_RSP           0           0.0      0.0      0.0                0.0               
+FINALIZE_PROPOSE_MSG   0           0.0      0.0      0.0                0.0               
+ECHO_RSP               0           0.0      0.0      0.0                0.0               
+INTERNAL_RSP           0           0.0      0.0      0.0                0.0               
+FAILED_SESSION_MSG     0           0.0      0.0      0.0                0.0               
+_TRACE                 0           0.0      0.0      0.0                0.0               
+SCHEMA_VERSION_RSP     0           0.0      0.0      0.0                0.0               
+FINALIZE_COMMIT_MSG    0           0.0      0.0      0.0                0.0               
+SNAPSHOT_MSG           0           0.0      0.0      0.0                0.0               
+PREPARE_CONSISTENT_RSP 0           0.0      0.0      0.0                0.0               
+PAXOS_PROPOSE_REQ      0           0.0      0.0      0.0                0.0               
+PAXOS_PREPARE_RSP      0           0.0      0.0      0.0                0.0               
+MUTATION_REQ           0           0.0      0.0      0.0                0.0               
+READ_REQ               0           0.0      0.0      0.0                0.0               
+PING_RSP               0           0.0      0.0      0.0                0.0               
+RANGE_RSP              0           0.0      0.0      0.0                0.0               
+VALIDATION_REQ         0           0.0      0.0      0.0                0.0               
+SYNC_REQ               0           0.0      0.0      0.0                0.0               
+_TEST_1                0           0.0      0.0      0.0                0.0               
+GOSSIP_SHUTDOWN        0           0.0      0.0      0.0                0.0               
+TRUNCATE_REQ           0           0.0      0.0      0.0                0.0               
+_TEST_2                0           0.0      0.0      0.0                0.0               
+GOSSIP_DIGEST_ACK      0           1358.102 3379.391 4055.2690000000002 4055.2690000000002
+SCHEMA_PUSH_REQ        0           0.0      0.0      0.0                0.0               
+FINALIZE_PROMISE_MSG   0           0.0      0.0      0.0                0.0               
+BATCH_STORE_REQ        0           0.0      0.0      0.0                0.0               
+COUNTER_MUTATION_RSP   0           0.0      0.0      0.0                0.0               
+REPAIR_RSP             0           0.0      0.0      0.0                0.0               
+STATUS_REQ             0           0.0      0.0      0.0                0.0               
+SCHEMA_PULL_REQ        0           0.0      0.0      0.0                0.0               
+READ_REPAIR_REQ        0           0.0      0.0      0.0                0.0               
+REPLICATION_DONE_REQ   0           0.0      0.0      0.0                0.0               
+PAXOS_PROPOSE_RSP      0           0.0      0.0      0.0                0.0
+
+kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool compactionstats
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+pending tasks: 0
+
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool netstats
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+Mode: NORMAL
+Not sending any streams.
+Read Repair Statistics:
+Attempted: 0
+Mismatch (Blocking): 0
+Mismatch (Background): 0
+Pool Name                    Active   Pending      Completed   Dropped
+Large messages                  n/a         0              2         0
+Small messages                  n/a         0            120         0
+Gossip messages                 n/a         0          10339         0
+
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool describecluster
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+Cluster Information:
+        Name: k8ssandra-example
+        Snitch: org.apache.cassandra.locator.GossipingPropertyFileSnitch
+        DynamicEndPointSnitch: enabled
+        Partitioner: org.apache.cassandra.dht.Murmur3Partitioner
+        Schema versions:
+                98e8d477-1d57-3e63-8f2e-218f642a5321: [10.76.0.134, 10.76.0.73, 10.76.0.13]
+
+Stats for all nodes:
+        Live: 3
+        Joining: 0
+        Moving: 0
+        Leaving: 0
+        Unreachable: 0
+
+Data Centers: 
+        dc1 #Nodes: 3 #Down: 0
+
+Database versions:
+        4.0.11: [10.76.0.134:7000, 10.76.0.73:7000, 10.76.0.13:7000]
+
+Keyspaces:
+        system_schema -> Replication class: LocalStrategy {}
+        system -> Replication class: LocalStrategy {}
+        system_auth -> Replication class: NetworkTopologyStrategy {dc1=3}
+        system_distributed -> Replication class: NetworkTopologyStrategy {dc1=3}
+        system_traces -> Replication class: NetworkTopologyStrategy {dc1=3}
+        myks -> Replication class: SimpleStrategy {replication_factor=1}
+
+--check services
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl get svc -n k8ssandra-operator
+NAME                                               TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                                        AGE
+k8ssandra-example-dc1-additional-seed-service      ClusterIP   None             <none>        <none>                                         63m
+k8ssandra-example-dc1-all-pods-service             ClusterIP   None             <none>        9042/TCP,8080/TCP,9103/TCP,9000/TCP            63m
+k8ssandra-example-dc1-contact-points-service       ClusterIP   None             <none>        9000/TCP,9103/TCP,8080/TCP,9042/TCP            63m
+k8ssandra-example-dc1-service                      ClusterIP   None             <none>        9042/TCP,9142/TCP,8080/TCP,9103/TCP,9000/TCP   63m
+k8ssandra-example-seed-service                     ClusterIP   None             <none>        <none>                                         63m
+k8ssandra-operator-cass-operator-webhook-service   ClusterIP   34.118.236.227   <none>        443/TCP                                        64m
+k8ssandra-operator-webhook-service                 ClusterIP   34.118.225.109   <none>        443/TCP 
+
+--if using miniKube, check resources
+minikube kubectl -- top nodes
+minikube kubectl -- top pods -A
+
+or directly
+kubectl top nodes
+kubectl top pods -A
+
+--Check storage volumes
+kubectl get pvc -n k8ssandra-operator
+kubectl get pv
+
+================================
+CLEANUP
+---cleanup if needed--------
+--Delete the K8ssandraCluster
+This removes all Cassandra pods, StatefulSets, Services, and PVCs created by the CR.
+
+kubectl delete k8ssandracluster k8ssandra-example -n k8ssandra-operator
+
+--confirm removal
+kubectl get pods -n k8ssandra-operator
+kubectl get pvc -n k8ssandra-operator
+
+--delete operator namespace
+This removes remaining ConfigMaps, secrets, and leftover resources.
+
+kubectl delete namespace k8ssandra-operator
+
+--Remove K8ssandra operator (CRDs + deployments)
+--if installd using manifest
+kubectl delete -f https://repo1.maven.org/maven2/io/k8ssandra/k8ssandra-operator/1.8.1/k8ssandra-operator.yaml
+
+--if installed using local file
+kubectl delete -f k8ssandra-operator.yaml
+
+--Remove lingering CRDs
+kubectl delete crd k8ssandraclusters.k8ssandra.io
+kubectl delete crd cassandradatacenters.cassandra.datastax.com
+kubectl delete crd reaperclusters.reaper.cassandra.io
+kubectl delete crd stargateclusters.stargate.k8ssandra.io
+kubectl delete crd medusabackups.medusa.k8ssandra.io
+kubectl delete crd medusabackupjobs.medusa.k8ssandra.io
+kubectl delete crd medusarestores.medusa.k8ssandra.io
+kubectl delete crd medusarestorejobs.medusa.k8ssandra.io
+
+--Remove persistent disks in GCP
+gcloud compute disks list --filter="name~'server-data'"
+
+--now delete
+gcloud compute disks delete DISK_NAME --zone=us-central1-a
+
+
+--Remove finalizers that may block deletion:
+kubectl get k8ssandracluster -A
+
+--Check node allocatable resources:
+--kubectl describe nodes | grep -A3 Allocatable
+Allocatable:
+  cpu:                3920m
+  ephemeral-storage:  11766801565
+  hugepages-1Gi:      0
+--
+Allocatable:
+  cpu:                3920m
+  ephemeral-storage:  11766801565
+  hugepages-1Gi:      0
+--
+Allocatable:
+  cpu:                3920m
+  ephemeral-storage:  11766801565
+  hugepages-1Gi:      0
+
+--resizing
+gcloud container clusters resize gke-cluster-1 \
+  --node-pool default-pool \
+  --num-nodes 3
+
+--resizing using larger nodes
+gcloud container node-pools create cassandra-pool \
+  --cluster gke-cluster-1 \
+  --machine-type e2-standard-4 \
+  --num-nodes 3
+
+& then re-apply your K8ssandraCluster YAML.
+--------------------------------cleanup complete----
 
 
