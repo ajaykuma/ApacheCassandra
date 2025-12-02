@@ -1,0 +1,482 @@
+Original Manifest
+--------------
+apiVersion: k8ssandra.io/v1alpha1
+kind: K8ssandraCluster
+metadata:
+  name: k8ssandra-example
+  namespace: k8ssandra-operator
+spec:
+  cassandra:
+    serverType: cassandra
+    serverVersion: "4.0.11"
+    datacenters:
+      - metadata:
+          name: dc1
+        size: 3
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+
+        racks:
+          - name: default
+
+        storageConfig:
+          cassandraDataVolumeClaimSpec:
+            storageClassName: standard-rwo
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+
+        config:
+          cassandraYaml:
+            memtable_allocation_type: heap_buffers
+          jvmOptions:
+            heapSize: "2Gi"
+            heapNewGenSize: "512Mi"
+
+
+#1 Enable Reaper (automated repairs / Reaper UI)
+Reaper is a Cassandra repair orchestration service. It runs the “repair daemon” that coordinates incremental repairs to keep data consistent across replicas.
+Cassandra requires periodic repairs to keep replicas consistent. Reaper is a popular repair orchestration tool that K8ssandra integrates with.
+
+--when we add
+reaper:
+  enabled: true
+
+The K8ssandra Operator automatically:
+
+Creates a ReaperDeployment/Reaper StatefulSet (depending on operator version).
+Creates a Reaper keyspace in Cassandra.
+Creates a Reaper admin schema inside Cassandra (tables, cluster registrations).
+Registers the DC’s Cassandra cluster inside Reaper.
+Sets up the Reaper sidecar (optional in some versions) or uses JMX authentication to coordinate repairs.
+Exposes Reaper service (reaper-service) inside the namespace.
+
+
+--Add a reaper section
+reaper:                          #MUST BE TOP-LEVEL
+    enabled: true
+    autoScheduling:                #optional
+      enabled: false
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+    heapSize: "256Mi"
+    size: 1
+
+OR 
+  reaper:
+    deploymentMode: PER_DC
+    heapSize: "256Mi"
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+    autoScheduling:
+      enabled: false
+    containerImage:
+      repository: thelastpickle/cassandra-reaper
+      tag: "3.4.0"
+
+
+In K8ssandra v1alpha1, containerImage is optional. If you omit it, the operator uses a default Reaper image.
+or
+(final)
+  reaper:
+    deploymentMode: PER_DC
+    heapSize: "256Mi"
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+    autoScheduling:
+      enabled: false
+
+##Before applying
+Does version of the K8ssandra Operator support putting reaper in datacenter block or top level, as
+Different K8ssandra Operator versions have different CRD structures.
+
+--confirm the correct fields on cluster
+kubectl explain K8ssandraCluster.spec
+kubectl explain K8ssandraCluster.spec | grep -i reaper
+--Discover valid Reaper fields
+kubectl explain K8ssandraCluster.spec.reaper
+
+output shows:
+our operator version supports i.e our CRD supports fields such as:
+
+resources
+heapSize
+deploymentMode (PER_DC, SINGLE, CONTROL_PLANE)
+autoScheduling
+containerImage
+httpManagement
+keyspace
+storageType
+storageConfig
+uiUserSecretRef
+cassandraUserSecretRef
+telemetry
+affinity, tolerations, etc.
+
+This means:
+we can tune Reaper’s resources, heap, image, storage, scheduling
+we can configure authentication, probes, and security
+we can choose deployment mode (PER_DC = default, 1 per datacenter)
+we cannot enable/disable Reaper
+Reaper is considered enabled if the spec.reaper object exists.
+we cannot set replica count manually
+
+Replica count follows deploymentMode:
+deploymentMode	meaning
+PER_DC	1 Reaper per Cassandra DC (default)
+SINGLE	1 Reaper for the whole cluster
+CONTROL_PLANE	External/global Reaper
+
+kubectl explain K8ssandraCluster.spec.cassandra.datacenters
+
+Final: 
+---
+apiVersion: k8ssandra.io/v1alpha1
+kind: K8ssandraCluster
+metadata:
+  name: k8ssandra-example
+  namespace: k8ssandra-operator
+spec:
+  cassandra:
+    serverType: cassandra
+    serverVersion: "4.0.11"
+    datacenters:
+      - metadata:
+          name: dc1
+        size: 3
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+        racks:
+          - name: default
+        storageConfig:
+          cassandraDataVolumeClaimSpec:
+            storageClassName: standard-rwo
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+        config:
+          cassandraYaml:
+            memtable_allocation_type: heap_buffers
+          jvmOptions:
+            heapSize: "2Gi"
+            heapNewGenSize: "512Mi"
+
+  reaper:
+    deploymentMode: PER_DC
+    heapSize: "256Mi"
+    resources:
+      requests:
+        cpu: "200m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+    autoScheduling:
+      enabled: false
+
+sudo apt install yamllint
+yamllint k8ssandra.yaml
+OR
+kubectl apply --dry-run=client -f your-file.yaml
+
+kuebctl apply -f k8ssandra.yaml
+
+--to check
+kubectl -n k8ssandra-operator get pods -l app=reaper
+nothing?
+(might be lable differences)
+
+kubectl get pods -l app=reaper
+nothing?
+
+kubectl -n k8ssandra-operator get pods | grep reaper
+
+kubectl get cassandradatacenters -A
+
+kubectl -n k8ssandra-operator get k8ssandracluster k8ssandra-example -o yaml | grep -i reaper -A5
+
+Note**
+Reaper only starts when:
+
+CassandraDatacenter is Ready
+Keyspace replication is created
+NodeTool validation succeeds
+Management API is reachable
+Reaper role is created
+
+All Cassandra and Reaper workloads must go in a workload namespace, NOT the operator’s namespace. (but better to avoid operator namespace)
+
+kubectl -n k8ssandra-operator get pods
+--check logs
+kubectl -n k8ssandra-operator logs k8ssandra-example-dc1-reaper-55845bf694-mjh5g -c reaper-schema-init
+
+Note**
+Reaper uses Cassandra to store its state (repair schedules, run history, etc.).
+
+The init container:
+Connects to the Cassandra cluster.
+Creates the reaper_db keyspace if it doesn’t exist.
+Runs schema migrations so Reaper can store its data properly.
+It runs before the main Reaper container starts. If it fails, the pod is stuck in Init:CrashLoopBackOff.
+kubectl -n k8ssandra-operator logs k8ssandra-example-dc1-reaper-55845bf694-mjh5g -c reaper
+
+kubectl -n k8ssandra-operator get pods -l app.kubernetes.io/name=reaper
+
+
+------------------------
+Access web UI:
+Port forwarding to svc or pod directly
+kubectl -n k8ssandra-operator port-forward svc/k8ssandra-example-dc1-reaper-service 8080:8080
+Forwarding from 127.0.0.1:8080 -> 8080
+
+OR 
+kubectl -n k8ssandra-operator port-forward pod/k8ssandra-example-dc1-reaper-55845bf694-mjh5g 8080:8080
+Forwarding from 127.0.0.1:8080 -> 8080
+
+Now to access , in GCP click on web preview > preview on port 8080
+use the public url: https://8080-cs-990427060959-default.cs-europe-west1-xedi.cloudshell.dev/webui
+
+--to get pswd
+
+kubectl -n k8ssandra-operator get secret k8ssandra-example-reaper-ui -o jsonpath='{.data.password}' | base64 --decode
+
+username: k8ssandra-example-reaper-ui
+pswd: 
+
+-------------------------
+OR
+expose Reaper via LoadBalancer
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: k8ssandra-example-dc1-reaper-service
+  namespace: k8ssandra-operator
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: reaper
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+kubectl apply -f reaper-lb.yaml
+kubectl -n k8ssandra-operator get svc k8ssandra-example-dc1-reaper-service
+
+--wait for external IP
+http://<EXTERNAL-IP>:8080
+
+========================
+--Get a seed pod of your Cassandra datacenter:
+kubectl -n k8ssandra-operator get pods -l app.kubernetes.io/name=cassandra
+
+
+--Get the Cassandra service DNS name
+kubectl -n k8ssandra-operator get svc k8ssandra-example-dc1-all-pods-service -o yaml
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    cassandra.datastax.com/resource-hash: re14o7o14+GHPxAVHt3Kz6K3ac0Jkvs3BtZjD6aQMPE=
+    cloud.google.com/neg: '{"ingress":true}'
+  creationTimestamp: "2025-12-01T18:15:47Z"
+  labels:
+    app.kubernetes.io/created-by: cass-operator
+    app.kubernetes.io/instance: cassandra-k8ssandra-example
+    app.kubernetes.io/managed-by: cass-operator
+    app.kubernetes.io/name: cassandra
+    app.kubernetes.io/version: 4.0.11
+    cassandra.datastax.com/cluster: k8ssandra-example
+    cassandra.datastax.com/datacenter: dc1
+    cassandra.datastax.com/prom-metrics: "true"
+    k8ssandra.io/cluster-name: k8ssandra-example
+    k8ssandra.io/cluster-namespace: k8ssandra-operator
+  name: k8ssandra-example-dc1-all-pods-service
+  namespace: k8ssandra-operator
+  ownerReferences:
+  - apiVersion: cassandra.datastax.com/v1beta1
+    blockOwnerDeletion: true
+    controller: true
+    kind: CassandraDatacenter
+    name: dc1
+    uid: d4d27545-4f89-49b0-aa64-d1f4a2b687b4
+  resourceVersion: "1764612947797839005"
+  uid: f12a08c2-8d60-4e73-ad04-245783e8e430
+spec:
+  clusterIP: None
+  clusterIPs:
+  - None
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: native
+    port: 9042
+    protocol: TCP
+    targetPort: 9042
+  - name: mgmt-api
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: prometheus
+    port: 9103
+    protocol: TCP
+    targetPort: 9103
+  - name: metrics
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+  publishNotReadyAddresses: true
+  selector:
+    cassandra.datastax.com/cluster: k8ssandra-example
+    cassandra.datastax.com/datacenter: dc1
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+
+Get Cassandra superuser credentials
+# Get username
+kubectl -n k8ssandra-operator get secret k8ssandra-example-superuser \
+  -o jsonpath='{.data.username}' | base64 --decode
+echo
+
+k8ssandra-example-superuser
+
+# Get password
+kubectl -n k8ssandra-operator get secret k8ssandra-example-superuser \
+  -o jsonpath='{.data.password}' | base64 --decode
+echo
+
+qgoMyT8hVp4eDFHyQcZ0
+--These are the credentials that Reaper will use to authenticate with Cassandra.
+
+Get Reaper UI login credentials
+# Get UI username
+kubectl -n k8ssandra-operator get secret k8ssandra-example-reaper-ui \
+  -o jsonpath='{.data.username}' | base64 --decode
+echo
+
+k8ssandra-example-reaper-ui
+
+# Get UI password
+kubectl -n k8ssandra-operator get secret k8ssandra-example-reaper-ui \
+  -o jsonpath='{.data.password}' | base64 --decode
+echo
+
+nxVEuVrJ4JcyQyyPUD1e
+
+#register the cluster with a POST request
+curl -X POST http://localhost:8080/reaper/v1/clusters \
+  -H "Content-Type: application/json" \
+  -d '{
+        "name": "k8ssandra-example-dc1",
+        "seedHosts": ["k8ssandra-example-dc1-all-pods-service.k8ssandra-operator.svc.cluster.local"],
+        "jmxUser": "k8ssandra-example-superuser",
+        "jmxPassword": "qgoMyT8hVp4eDFHyQcZ0"
+      }'
+
+------------------
+
+Connecting externally
+gcloud compute instances list
+NAME: gke-cluster-1-default-pool-ac74de92-4d95
+ZONE: us-central1-a
+MACHINE_TYPE: n1-standard-4
+PREEMPTIBLE: 
+INTERNAL_IP: 10.128.0.27
+EXTERNAL_IP: 
+STATUS: RUNNING
+
+NAME: gke-cluster-1-default-pool-ac74de92-gvv1
+ZONE: us-central1-a
+MACHINE_TYPE: n1-standard-4
+PREEMPTIBLE: 
+INTERNAL_IP: 10.128.0.28
+EXTERNAL_IP: 
+STATUS: RUNNING
+
+NAME: gke-cluster-1-default-pool-ac74de92-trh5
+ZONE: us-central1-a
+MACHINE_TYPE: n1-standard-4
+PREEMPTIBLE: 
+INTERNAL_IP: 10.128.0.26
+EXTERNAL_IP: 
+STATUS: RUNNING
+
+NAME: cs1
+ZONE: europe-west3-c
+MACHINE_TYPE: n2-standard-4
+PREEMPTIBLE: 
+INTERNAL_IP: 10.156.0.4
+EXTERNAL_IP: 
+STATUS: TERMINATED
+
+gcloud compute ssh gke-cluster-1-default-pool-ac74de92-4d95 --zone us-central1-a
+exit
+ls -all .ssh
+
+copy priv and pub key on to machine and convert priv as .ppk , to be able to connect using putty.
+Note**
+Connecting via SSH to a single GKE node does NOT give you “complete access” to the cluster
+Control plane (master): Managed by Google, you cannot SSH into it. It runs the API server, scheduler, etc.
+Worker nodes: Only run pods and kubelet. SSH gives access only to that node, not the API or cluster state.
+
+-----------------------
+gcloud container clusters get-credentials cluster-1 --zone us-central1-a --project cryptic-tower-477608-g6
+--Listing..
+gcloud container node-pools list --cluster cluster-1 --zone us-central1-a
+
+--Scaling down
+gcloud container clusters resize cluster-1 \
+    --zone us-central1-a \
+    --node-pool default-pool \
+    --num-nodes 0
+
+All pods stop because there are no nodes.
+Persistent volumes (PVCs, like Cassandra data) remain intact.
+
+--check
+kubectl get nodes -o wide
+kubectl get pods -A
+
+--bring back
+gcloud container clusters resize cluster-1 \
+    --zone us-central1-a \
+    --node-pool default-pool \
+    --num-nodes 3
+
+
+
+
+
+
+

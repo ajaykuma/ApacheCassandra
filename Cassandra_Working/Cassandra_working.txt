@@ -161,11 +161,11 @@ video_id
 5645f8bd-14bd-11e5-af1a-8638355b8e3a
 
 added_date
-2014-01-29
-2012-04-03
-2013-03-17
-2013-10-16
-2013-04-16
+2024-01-29
+2022-04-03
+2023-03-17
+2023-10-16
+2023-04-16
 
 title
 Cassandra History
@@ -174,23 +174,23 @@ Cassandra Intro
 DataStax DevCenter
 What is DataStax Enterprise?
 
-cqlsh:killrvideo> insert into videos(video_id,added_date,Title) values (1645ea59-14bd-11e5-a993-8138354b7e31,'2014-01-29','Cassandra History');
+cqlsh:killrvideo> insert into videos(video_id,added_date,Title) values (1645ea59-14bd-11e5-a993-8138354b7e31,'2024-01-29','Cassandra History');
 cqlsh:killrvideo> select * from videos;
 
  video_id                             | added_date                      | title
 --------------------------------------+---------------------------------+-------------------
- 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 | Cassandra History
+ 1645ea59-14bd-11e5-a993-8138354b7e31 | 2024-01-29 00:00:00.000000+0000 | Cassandra History
 
 #similarly other rows
 cqlsh:killrvideo> select * from videos;
 
  video_id                             | added_date                      | title
 --------------------------------------+---------------------------------+------------------------------
- 245e8024-14bd-11e5-9743-8238356b7e32 | 2012-04-03 00:00:00.000000+0000 |             Cassandra & SSDs
- 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 |              Cassandra Intro
- 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2013-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
- 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 |            Cassandra History
- 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2013-10-16 00:00:00.000000+0000 |              DataStax Studio
+ 245e8024-14bd-11e5-9743-8238356b7e32 | 2022-04-03 00:00:00.000000+0000 |             Cassandra & SSDs
+ 3452f7de-14bd-11e5-855e-8738355b7e3a | 2023-03-17 00:00:00.000000+0000 |              Cassandra Intro
+ 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2023-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
+ 1645ea59-14bd-11e5-a993-8138354b7e31 | 2024-01-29 00:00:00.000000+0000 |            Cassandra History
+ 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2023-10-16 00:00:00.000000+0000 |              DataStax Studio
 
 cqlsh:killrvideo> truncate videos;
 cqlsh:killrvideo> select * from videos;
@@ -211,11 +211,11 @@ cqlsh:killrvideo> select * from videos;
 
  video_id                             | added_date                      | title
 --------------------------------------+---------------------------------+------------------------------
- 245e8024-14bd-11e5-9743-8238356b7e32 | 2012-04-03 00:00:00.000000+0000 |             Cassandra & SSDs
- 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 |              Cassandra Intro
- 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2013-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
- 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 |            Cassandra History
- 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2013-10-16 00:00:00.000000+0000 |              DataStax Studio
+ 245e8024-14bd-11e5-9743-8238356b7e32 | 2022-04-03 00:00:00.000000+0000 |             Cassandra & SSDs
+ 3452f7de-14bd-11e5-855e-8738355b7e3a | 2023-03-17 00:00:00.000000+0000 |              Cassandra Intro
+ 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2023-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
+ 1645ea59-14bd-11e5-a993-8138354b7e31 | 2024-01-29 00:00:00.000000+0000 |            Cassandra History
+ 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2023-10-16 00:00:00.000000+0000 |              DataStax Studio
 
 cqlsh:killrvideo> select count(*) from videos;
 
@@ -236,11 +236,11 @@ cqlsh:killrvideo> SELECT token(video_id), video_id
 #this CSV file categorizes the videos by one of two tags: cassandra or datastax.
 cat /home/ubuntu/labwork/data-files/videos-by-tag.csv
 tag,video id,added date,title
-cassandra,1645ea59-14bd-11e5-a993-8138354b7e31,2014-01-29,Cassandra History
-cassandra,245e8024-14bd-11e5-9743-8238356b7e32,2012-04-03,Cassandra & SSDs
-cassandra,3452f7de-14bd-11e5-855e-8738355b7e3a,2013-03-17,Cassandra Intro
-datastax,4845ed97-14bd-11e5-8a40-8338255b7e33,2013-10-16,DataStax Studio
-datastax,5645f8bd-14bd-11e5-af1a-8638355b8e3a,2013-04-16,What is DataStax Enterprise?
+cassandra,1645ea59-14bd-11e5-a993-8138354b7e31,2024-01-29,Cassandra History
+cassandra,245e8024-14bd-11e5-9743-8238356b7e32,2022-04-03,Cassandra & SSDs
+cassandra,3452f7de-14bd-11e5-855e-8738355b7e3a,2023-03-17,Cassandra Intro
+datastax,4845ed97-14bd-11e5-8a40-8338255b7e33,2023-10-16,DataStax Studio
+datastax,5645f8bd-14bd-11e5-af1a-8638355b8e3a,2023-04-16,What is DataStax Enterprise?
 
 cqlsh:killrvideo> create table videos_by_tag ( tag Text, video_id timeuuid, added_date timestamp, title text, Primary key ((tag),video_id));
 
@@ -255,11 +255,11 @@ cqlsh:killrvideo> select * from videos_by_tag;
 
  tag       | video_id                             | added_date                      | title
 -----------+--------------------------------------+---------------------------------+------------------------------
-  datastax | 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2013-10-16 00:00:00.000000+0000 |              DataStax Studio
-  datastax | 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2013-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
- cassandra | 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 |            Cassandra History
- cassandra | 245e8024-14bd-11e5-9743-8238356b7e32 | 2012-04-03 00:00:00.000000+0000 |             Cassandra & SSDs
- cassandra | 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 |              Cassandra Intro
+  datastax | 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2023-10-16 00:00:00.000000+0000 |              DataStax Studio
+  datastax | 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2023-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
+ cassandra | 1645ea59-14bd-11e5-a993-8138354b7e31 | 2024-01-29 00:00:00.000000+0000 |            Cassandra History
+ cassandra | 245e8024-14bd-11e5-9743-8238356b7e32 | 2022-04-03 00:00:00.000000+0000 |             Cassandra & SSDs
+ cassandra | 3452f7de-14bd-11e5-855e-8738355b7e3a | 2023-03-17 00:00:00.000000+0000 |              Cassandra Intro
 
 (5 rows)
 
@@ -291,17 +291,17 @@ cqlsh:killrvideo> select * from videos_by_tag where tag='datastax';
 
  tag      | video_id                             | added_date                      | title
 ----------+--------------------------------------+---------------------------------+------------------------------
- datastax | 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2013-10-16 00:00:00.000000+0000 |              DataStax Studio
- datastax | 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2013-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
+ datastax | 4845ed97-14bd-11e5-8a40-8338255b7e33 | 2023-10-16 00:00:00.000000+0000 |              DataStax Studio
+ datastax | 5645f8bd-14bd-11e5-af1a-8638355b8e3a | 2023-04-16 00:00:00.000000+0000 | What is DataStax Enterprise?
 
 (2 rows)
 cqlsh:killrvideo> select * from videos_by_tag where tag='cassandra';
 
  tag       | video_id                             | added_date                      | title
 -----------+--------------------------------------+---------------------------------+-------------------
- cassandra | 1645ea59-14bd-11e5-a993-8138354b7e31 | 2014-01-29 00:00:00.000000+0000 | Cassandra History
- cassandra | 245e8024-14bd-11e5-9743-8238356b7e32 | 2012-04-03 00:00:00.000000+0000 |  Cassandra & SSDs
- cassandra | 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 |   Cassandra Intro
+ cassandra | 1645ea59-14bd-11e5-a993-8138354b7e31 | 2024-01-29 00:00:00.000000+0000 | Cassandra History
+ cassandra | 245e8024-14bd-11e5-9743-8238356b7e32 | 2022-04-03 00:00:00.000000+0000 |  Cassandra & SSDs
+ cassandra | 3452f7de-14bd-11e5-855e-8738355b7e3a | 2023-03-17 00:00:00.000000+0000 |   Cassandra Intro
 
 (3 rows)
 InvalidRequest: Error from server: code=2200 [Invalid query] message="Cannot execute this query as it might involve data filtering and thus may have unpredictable performance. If you want to execute this query despite the performance unpredictability, use ALLOW FILTERING"
@@ -310,7 +310,7 @@ cqlsh:killrvideo> select * from videos_by_tag where title='Cassandra Intro' allo
 
  tag       | video_id                             | added_date                      | title
 -----------+--------------------------------------+---------------------------------+-----------------
- cassandra | 3452f7de-14bd-11e5-855e-8738355b7e3a | 2013-03-17 00:00:00.000000+0000 | Cassandra Intro
+ cassandra | 3452f7de-14bd-11e5-855e-8738355b7e3a | 2023-03-17 00:00:00.000000+0000 | Cassandra Intro
 
 (1 rows)
 

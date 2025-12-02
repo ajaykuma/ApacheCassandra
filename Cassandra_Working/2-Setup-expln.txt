@@ -1,0 +1,102 @@
+k8ssandra.yaml
+Documentation: https://docs.k8ssandra.io/
+
+----------------
+apiVersion: k8ssandra.io/v1alpha1
+kind: K8ssandraCluster
+metadata:
+  name: k8ssandra-example
+  namespace: k8ssandra-operator
+spec:
+  cassandra:
+    serverType: cassandra
+    serverVersion: "4.0.11"
+    datacenters:
+      - metadata:
+          name: dc1
+        size: 3
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+
+        racks:
+          - name: default
+
+        storageConfig:
+          cassandraDataVolumeClaimSpec:
+            storageClassName: standard-rwo
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+
+        config:
+          cassandraYaml:
+            memtable_allocation_type: heap_buffers
+          jvmOptions:
+            heapSize: "2Gi"
+            heapNewGenSize: "512Mi"
+
+
+apiVersion: k8ssandra.io/v1alpha1 & kind: K8ssandraCluster
+This is the top-level K8ssandra CR (CustomResource) provided by the k8ssandra-operator. Creating this CR instructs the operator to provision 
+the full stack (by default, Cassandra datacenters and optionally other components). 
+The operator watches objects of this kind and reconciles the declared state.
+
+metadata.name and metadata.namespace
+These identify the resource. The K8ssandraCluster is typically created in a “control plane” namespace/cluster; 
+the operator reconciles DCs, Reaper, Medusa, Stargate etc. Names and namespaces control where the operator manages resources.
+
+spec.cassandra.serverType: cassandra
+Tells the operator which server distribution you want. cassandra means Apache Cassandra (other distributions may be supported). 
+The operator maps this to the appropriate Cass Operator CassandraDatacenter CR(s).
+
+spec.cassandra.serverVersion: "4.0.11"
+The Cassandra version to deploy. The operator will choose images compatible with this version. Make sure the operator release 
+supports this Cassandra version (check CRD / compatibility matrix in K8ssandra docs).
+
+datacenters: (list) — here you declared a single datacenter dc1
+Each item becomes a CassandraDatacenter (a Cass Operator CR) managed by the k8ssandra-operator.
+
+metadata.name: dc1 — the DC name inside the cluster.
+size: 3 — number of nodes in this DC (represents Cassandra pods). The operator will create 3 statefulset replicas by default.
+resources.requests/limits — Kubernetes resource requests & limits used for the Cassandra containers. We’ve set CPU 2 and memory 4Gi for both request 
+and limit (requests are scheduling guarantees; limits are runtime caps).
+
+Note**
+setting request == limit ensures predictable scheduling but means the pod cannot burst above that CPU or memory. 
+Watch OOM / OOMKilled events if heap settings exceed memory.
+
+racks: - name: default — rack topology. Cassandra uses racks to place replicas; 
+the operator maps this to Kubernetes topology when creating pods and persistent volumes.
+
+storageConfig.cassandraDataVolumeClaimSpec — how to provision storage for the Cassandra data directories.
+storageClassName: standard-rwo — the StorageClass in your cluster used to allocate PersistentVolumeClaims (must exist).
+accessModes: ["ReadWriteOnce"] — typical for block storage.
+resources.requests.storage: 10Gi — PV size per node.
+
+config.cassandraYaml.memtable_allocation_type: heap_buffers — this is a Cassandra server config (translates to cassandra.yaml)
+memtable_allocation_type controls how memtable memory is allocated (heap_buffers places memtable off-heap/on-heap depending on settings.
+
+jvmOptions.heapSize and heapNewGenSize — JVM sizing for Cassandra. Here we set 2Gi heap and 512Mi young gen. 
+Make sure these values are consistent with the container memory request (we used 4Gi requests — leaving headroom for OS, 
+off-heap memtables and other processes is important).
+
+Note**Keep heap vs container memory in balance: typically leave ~30–40% of container memory for OS and off-heap allocations depending on workload.
+
+Commands:
+kubectl -n k8ssandra-operator get pods
+kubectl get sc
+--Confirm operator CRD versions: 
+kubectl get crd
+kubectl get crd | grep k8ssandra
+kubectl explain K8ssandraCluster to see fields supported.
+
+
+
+
+

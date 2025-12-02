@@ -36,7 +36,8 @@ helm install k8ssandra-operator k8ssandra/k8ssandra-operator --namespace k8ssand
 
 
 --once operator is running
-k8ssandraCluster YAML
+k8ssandra.yaml
+
 apiVersion: k8ssandra.io/v1alpha1
 kind: K8ssandraCluster
 metadata:
@@ -86,7 +87,7 @@ spec:
             authenticator: PasswordAuthenticator
 
 or
-
+(Final)
 apiVersion: k8ssandra.io/v1alpha1
 kind: K8ssandraCluster
 metadata:
@@ -94,11 +95,19 @@ metadata:
   namespace: k8ssandra-operator
 spec:
   cassandra:
+    serverVersion: "4.0.3"
     clusterName: dc1
     datacenters:
       - metadata:
           name: dc1
         size: 1
+        storageConfig:
+          cassandraDataVolumeClaimSpec:
+            storageClassName: standard
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 5Gi
         config:
           cassandraYaml:
             authenticator: PasswordAuthenticator
@@ -106,21 +115,29 @@ spec:
           jvmOptions:
             heapSize: 512M
             heapNewGenSize: 256M
-        podTemplateSpec:
-          spec:
-            containers:
-              - name: cassandra
-                resources:
-                  limits:
-                    memory: "2Gi"
-                  requests:
-                    memory: "1Gi"
 
-
-kubectl apply -f k8ssandraCluster.yaml -n k8ssandra-operator
+kubectl apply -f k8ssandra.yaml -n k8ssandra-operator
 
 kubectl get k8ssandracluster -n k8ssandra-operator
 
+kubectl get secrets -n k8ssandra-operator
+NAME                                                   TYPE                                  DATA   AGE
+dc1-superuser                                          Opaque                                2      4d
+k8ssandra-operator-cass-operator-webhook-server-cert   kubernetes.io/tls                     3      4d10h
+k8ssandra-operator-token                               kubernetes.io/service-account-token   3      4d10h
+k8ssandra-operator-webhook-server-cert                 kubernetes.io/tls                     3      4d10h
+sh.helm.release.v1.k8ssandra-operator.v1               helm.sh/release.v1                    1      4d10h
+
+hdu@cs2:~/k8ssandra$ kubectl get secret dc1-superuser -n k8ssandra-operator -o jsonpath="{.data.username}" | base64 --decode && echo
+dc1-superuser
+
+hdu@cs2:~/k8ssandra$ kubectl get secret dc1-superuser -n k8ssandra-operator -o jsonpath="{.data.password}" | base64 --decode && echo
+aocpZk80FZyc9RWntj-L
+
+kubectl exec -it dc1-dc1-default-sts-0 -n k8ssandra-operator -- \
+cqlsh -u dc1-superuser -p aocpZk80FZyc9RWntj-L
+
+cqlsh>
 ========================================================================
 K8ssandra Works Internally:
 
@@ -184,6 +201,61 @@ Benefits of Using K8ssandra
 
 --------------------------------------
 
+--Multiple PODS
+minikube delete
+
+[optional,if using vmbox
+sudo apt update
+sudo apt install virtualbox virtualbox-ext-pack -y]
+
+minikube start --memory=12288 --cpus=4 --driver=docker
+
+use updated k8ssandra.yaml file
+apiVersion: k8ssandra.io/v1alpha1
+kind: K8ssandraCluster
+metadata:
+  name: k8ssandra
+  namespace: k8ssandra-operator
+spec:
+  cassandra:
+    serverVersion: "4.0.3"
+    clusterName: dc1
+    datacenters:
+      - metadata:
+          name: dc1
+        size: 3                     # 3 Cassandra pods
+        storageConfig:
+          cassandraDataVolumeClaimSpec:
+            storageClassName: standard
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 4Gi       # each pod gets 5Gi
+        config:
+          cassandraYaml:
+            authenticator: PasswordAuthenticator
+            authorizer: CassandraAuthorizer
+          jvmOptions:
+            heapSize: 1G            # moderate heap to fit 3 pods
+            heapNewGenSize: 512M
+        resources:
+          requests:
+            memory: "1Gi"           # ensures pods fit into Minikube
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+
+helm repo add k8ssandra https://helm.k8ssandra.io/
+helm repo update
+helm install k8ssandra-operator k8ssandra/k8ssandra-operator --namespace k8ssandra-operator --create-namespace
+
+kubectl apply -f k8ssandra.yaml
+kubectl get pods -A
 
 
 

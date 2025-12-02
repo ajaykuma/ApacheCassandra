@@ -747,6 +747,8 @@ CREATE TABLE myks.users (
 --Monitoring commands
 
 kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool status
+[This gives the cluster/ring view:
+Nodes, tokens, state (UN/UL/DN), load, etc.]
 Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
 Datacenter: dc1
 ===============
@@ -758,6 +760,7 @@ UN  10.76.0.73   96.33 KiB  16      35.7%             49d3c510-dd01-4f5f-a090-c1
 UN  10.76.0.13   96.42 KiB  16      31.6%             56286115-9538-433a-b5e3-9b1abf0bf096  default
 
 
+Memory Usage (Heap, Off-heap)
 kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool info
 Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
 ID                     : 49d3c510-dd01-4f5f-a090-c1f56c3e8fac
@@ -836,6 +839,16 @@ Address           Rack        Status State   Load            Owns               
 
   Warning: "nodetool ring" is used to output all the tokens of a node.
   To view status related info of a node use "nodetool status" instead.
+
+--Threadpool & read/write pressure
+Shows all thread pools:
+
+Memtable flush writer
+ReadStage
+MutationStage
+CompactionExecutor
+GossipStage
+and many others.
 
 ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool tpstats
 Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
@@ -928,6 +941,8 @@ READ_REPAIR_REQ        0           0.0      0.0      0.0                0.0
 REPLICATION_DONE_REQ   0           0.0      0.0      0.0                0.0               
 PAXOS_PROPOSE_RSP      0           0.0      0.0      0.0                0.0
 
+Compaction & flush operations
+Ongoing compactions:
 kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- nodetool compactionstats
 Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
 pending tasks: 0
@@ -987,6 +1002,105 @@ k8ssandra-example-seed-service                     ClusterIP   None             
 k8ssandra-operator-cass-operator-webhook-service   ClusterIP   34.118.236.227   <none>        443/TCP                                        64m
 k8ssandra-operator-webhook-service                 ClusterIP   34.118.225.109   <none>        443/TCP 
 
+--to check again---
+--check SSTables information
+Number of SSTables
+Space used
+Compacted
+Read latency
+Write latency
+
+--get internal table name
+kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- \
+ls /var/lib/cassandra/data/myks/
+
+shows: users-7a10c7e0cee811f0b8711f7c4c6ea1be
+ie,internal-CFID(tableid) appended to table name ,so our table name would be users
+
+since our table contains, this data
+k8ssandra-example-superuser@cqlsh> use myks;
+k8ssandra-example-superuser@cqlsh:myks> select * from users;
+
+ id                                   | email           | name
+--------------------------------------+-----------------+-------
+ 0e6f9653-c2dc-4b7d-8175-6dd1193eae44 | new@example.com | Alice
+
+--to get SSTables info..
+kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- \
+nodetool getsstables myks users 0e6f9653-c2dc-4b7d-8175-6dd1193eae44
+
+-----to check again ends-----------------
+
+Disk Usage (filesystem inside the pod)
+Cassandra data directory inside the pod is usually: /var/lib/cassandra/data
+kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- df -h /var/lib/cassandra
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sdb        9.8G  9.2M  9.8G   1% /var/lib/cassandra
+
+--general SSTable information (not row-specific)
+Number of SSTables
+Space used (live)
+Space used (total)
+Compaction pending tasks
+
+ak7singhal@cloudshell:~/k8ssandra (cryptic-tower-477608-g6)$ kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- \
+nodetool tablestats myks.users
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+Total number of tables: 41
+----------------
+Keyspace : myks
+        Read Count: 0
+        Read Latency: NaN ms
+        Write Count: 2
+        Write Latency: 0.4265 ms
+        Pending Flushes: 0
+                Table: users
+                SSTable count: 0
+                Old SSTable count: 0
+                Space used (live): 0
+                Space used (total): 0
+                Space used by snapshots (total): 0
+                Off heap memory used (total): 0
+                SSTable Compression Ratio: -1.0
+                Number of partitions (estimate): 0
+                Memtable cell count: 2
+                Memtable data size: 81
+                Memtable off heap memory used: 0
+                Memtable switch count: 0
+                Local read count: 0
+                Local read latency: NaN ms
+                Local write count: 2
+                Local write latency: NaN ms
+                Pending flushes: 0
+                Percent repaired: 100.0
+                Bytes repaired: 0.000KiB
+                Bytes unrepaired: 0.000KiB
+                Bytes pending repair: 0.000KiB
+                Bloom filter false positives: 0
+                Bloom filter false ratio: 0.00000
+                Bloom filter space used: 0
+                Bloom filter off heap memory used: 0
+                Index summary off heap memory used: 0
+                Compression metadata off heap memory used: 0
+                Compacted partition minimum bytes: 0
+                Compacted partition maximum bytes: 0
+                Compacted partition mean bytes: 0
+                Average live cells per slice (last five minutes): NaN
+                Maximum live cells per slice (last five minutes): 0
+                Average tombstones per slice (last five minutes): NaN
+                Maximum tombstones per slice (last five minutes): 0
+                Dropped Mutations: 0
+                Droppable tombstone ratio: 0.00000
+
+--List SSTable files on disk
+kubectl exec -it k8ssandra-example-dc1-default-sts-0 -n k8ssandra-operator -- ls -lh /var/lib/cassandra/data/myks
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+total 4.0K
+drwxr-sr-x 3 cassandra cassandra 4.0K Dec  1 19:03 users-7a10c7e0cee811f0b8711f7c4c6ea1be
+
+----------------
+Optional:
 --if using miniKube, check resources
 minikube kubectl -- top nodes
 minikube kubectl -- top pods -A
@@ -1044,7 +1158,7 @@ gcloud compute disks delete DISK_NAME --zone=us-central1-a
 kubectl get k8ssandracluster -A
 
 --Check node allocatable resources:
---kubectl describe nodes | grep -A3 Allocatable
+kubectl describe nodes | grep -A3 Allocatable
 Allocatable:
   cpu:                3920m
   ephemeral-storage:  11766801565
