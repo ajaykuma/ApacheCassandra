@@ -1,0 +1,81 @@
+Prometheus → collects metrics from Cassandra nodes
+Grafana → dashboards to visualize metrics
+Cassandra Exporter → exposes Cassandra metrics to Prometheus
+Reaper → optional, can integrate metrics for repairs
+
+
+#Enable Prometheus and Grafana
+K8ssandra automatically configures Cassandra Exporter when monitoring.prometheus.enabled: true.
+Metrics exposed by Cassandra Exporter include:
+Read/write latency, throughput
+Compactions
+JVM memory
+Disk usage per table
+Prometheus scrapes these metrics and stores them
+Grafana has prebuilt Cassandra dashboards.
+
+Yaml..
+
+spec:
+  cassandra:
+    serverVersion: "4.0.3"
+    clusterName: dc1
+    datacenters:
+      - metadata:
+          name: dc1
+        size: 3
+        softPodAntiAffinity: true
+        storageConfig:
+          cassandraDataVolumeClaimSpec:
+            storageClassName: standard
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 4Gi
+        resources:
+          requests:
+            memory: "1500Mi"
+            cpu: "800m"
+          limits:
+            memory: "2500Mi"
+            cpu: "1500m"
+        config:
+          cassandraYaml:
+            authenticator: PasswordAuthenticator
+            authorizer: CassandraAuthorizer
+            concurrent_compactors: 8
+            file_cache_size_in_mb: 64
+            concurrent_reads: 16
+            concurrent_writes: 16
+            memtable_flush_writers: 4
+            compaction_throughput_mb_per_sec: 16
+            hinted_handoff_enabled: false
+            read_request_timeout_in_ms: 5000
+            write_request_timeout_in_ms: 5000
+            trickle_fsync: true
+            trickle_fsync_interval_in_kb: 10240
+          jvmOptions:
+            heapSize: 1024M
+            heapNewGenSize: 512M
+  monitoring:
+    prometheus:
+      enabled: true
+      namespace: monitoring
+      service:
+        type: ClusterIP
+    grafana:
+      enabled: true
+      namespace: monitoring
+      service:
+        type: ClusterIP
+
+kubectl apply -f k8ssandra.yml
+kubectl get pods -n monitoring -w
+
+Acces Grafana:
+kubectl port-forward svc/grafana 3000:3000 -n monitoring
+
+Visit http://localhost:3000
+Default credentials: admin/admin (K8ssandra default)
+
+

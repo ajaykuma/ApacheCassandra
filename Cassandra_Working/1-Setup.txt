@@ -200,17 +200,141 @@ Benefits of Using K8ssandra
 -- Production-ready right out of the box
 
 --------------------------------------
-
 --Multiple PODS
+minikube delete (if existing)
+
+[note** our node has 4 vcpu cores, 15gb ram]
+
+minikube start --memory 4g
+**Default: 2 CPUs & 2GB RAM
+**we could have started one big node > minikube start --memory=12288 --cpus=4 --driver=docker
+
+minikube status
+minikube addons list
+
+docker ps
+--if needed docker stop <container>               docker rm <container>
+
+docker inspect <minikube container>
+
+hdu@cas1:~$ docker inspect 823d89d99523 | grep Cpus
+            "NanoCpus": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+hdu@cas1:~$ docker inspect 823d89d99523 | grep Memory
+            "Memory": 4294967296,
+            "MemoryReservation": 0,
+            "MemorySwap": 8589934592,
+            "MemorySwappiness": null,
+
+CPUs
+When NanoCpus = 0
+AND CpusetCpus = ""
+The container can use all CPUs of the host.
+
+Memory
+container has a hard cap of 4GB memory.
+
+hdu@cas1:~$ kubectl get nodes
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   69s   v1.34.0
+
+Add additional nodes:
+hdu@cas1:~$ minikube start --nodes 2 -p multi-node-k8s --memory=4g
+**This may ignore ,as Minikube falls back to the existing profile’s already-stored configuration.
+--shows output
+You cannot change the number of nodes for an existing minikube cluster.
+You cannot change the memory size for an existing minikube cluster.
+Please first delete the cluster.
+
+Minikube does not allow you to modify:
+CPU
+memory
+number of nodes
+for an existing profile. (~/.minikube/profiles/multi-node-k8s/config.json)
+hdu@cas1:~$ sudo cat ~/.minikube/profiles/multi-node-k8s/config.json | grep Memory
+    "Memory": 3072,
+hdu@cas1:~$ sudo cat ~/.minikube/profiles/multi-node-k8s/config.json | grep CPU
+    "CPUs": 2,
+
+So,
+minikube delete -p multi-node-k8s
 minikube delete
 
-[optional,if using vmbox
-sudo apt update
-sudo apt install virtualbox virtualbox-ext-pack -y]
+hdu@cas1:~$ minikube start --nodes 3 -p multi-node-k8s --cpus=2 --memory=4g
 
-minikube start --memory=12288 --cpus=4 --driver=docker
+kubectl get nodes
+NAME                 STATUS   ROLES           AGE   VERSION
+multi-node-k8s       Ready    control-plane   55s   v1.34.0
+multi-node-k8s-m02   Ready    <none>          28s   v1.34.0
+multi-node-k8s-m03   Ready    <none>          7s    v1.34.0
 
-use updated k8ssandra.yaml file
+hdu@cas1:~$ kubectl label node multi-node-k8s-m02 node-role.kubernetes.io/worker=worker
+node/multi-node-k8s-m02 labeled
+
+hdu@cas1:~$ kubectl label node multi-node-k8s-m03 node-role.kubernetes.io/worker=worker
+node/multi-node-k8s-m03 labeled
+
+hdu@cas1:~$ kubectl get nodes
+NAME                 STATUS   ROLES           AGE     VERSION
+multi-node-k8s       Ready    control-plane   2m24s   v1.34.0
+multi-node-k8s-m02   Ready    worker          117s    v1.34.0
+multi-node-k8s-m03   Ready    worker          96s     v1.34.0
+
+kubectl get storageclass
+NAME                 PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+standard (default)   k8s.io/minikube-hostpath   Delete          Immediate           false                  5m3s
+
+For optimum configuration:
+Each node has 4GB RAM, so per-pod allocation should be:
+
+resources:
+  requests:
+    memory: "1500Mi"
+    cpu: "800m"
+  limits:
+    memory: "2500Mi"
+    cpu: "1500m"
+
+So, this
+Leaves ~1.5GB for sidecars (reaper, medusa, metrics, mgmt-api)
+Leaves room for kubelet + system daemons
+Uses full CPU
+Ensures no OOM events
+
+JVM Heap could be
+jvmOptions:
+  heapSize: 1024M
+  heapNewGenSize: 512M
+
+
+--check if control plane is tainted
+kubectl describe node multi-node-k8s | grep -i taint -A 2
+
+Taints:             <none>
+Unschedulable:      false
+Lease:
+--which means not tainted.
+If the node is tainted
+Taints:             node-role.kubernetes.io/control-plane:NoSchedule
+NoSchedule → pods cannot schedule unless they tolerate the taint
+PreferNoSchedule → scheduler tries to avoid it
+NoExecute → pods are evicted if they don’t tolerate
+
+If we had strict anti-affinity rules,Then the scheduler will be forced to place each Cassandra pod on a different node.
+
+Option 1: 
+
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+
+helm repo add k8ssandra https://helm.k8ssandra.io/
+helm repo update
+helm install k8ssandra-operator k8ssandra/k8ssandra-operator --namespace k8ssandra-operator --create-namespace
+
+--use updated k8ssandra.yaml file
+
 apiVersion: k8ssandra.io/v1alpha1
 kind: K8ssandraCluster
 metadata:
@@ -223,28 +347,61 @@ spec:
     datacenters:
       - metadata:
           name: dc1
-        size: 3                     # 3 Cassandra pods
+        size: 3
         storageConfig:
           cassandraDataVolumeClaimSpec:
             storageClassName: standard
-            accessModes: [ "ReadWriteOnce" ]
+            accessModes: ["ReadWriteOnce"]
             resources:
               requests:
-                storage: 4Gi       # each pod gets 5Gi
+                storage: 4Gi
+        resources:
+          requests:
+            memory: "1500Mi"
+            cpu: "800m"
+          limits:
+            memory: "2500Mi"
+            cpu: "1500m"
         config:
           cassandraYaml:
             authenticator: PasswordAuthenticator
             authorizer: CassandraAuthorizer
           jvmOptions:
-            heapSize: 1G            # moderate heap to fit 3 pods
+            heapSize: 1024M
             heapNewGenSize: 512M
+
+Pods will schedule automatically on available nodes according to Kubernetes default scheduler.
+With our Minikube setup (2 workers + 1 untainted control-plane), the scheduler will decide where the 3 pods land.
+
+kubectl apply -f k8ssandra/k8ssandra.yaml -n k8ssandra-operator
+kubectl get pods -A
+kubectl get pods -n k8ssandra-operator
+
+Note**
+If you want nodeSelector, affinity, or anti-affinity
+You must upgrade the CRD to v1beta1 or newer, which supports podTemplate.
+
+
+--if needed reduce resources
         resources:
           requests:
-            memory: "1Gi"           # ensures pods fit into Minikube
+            memory: "1000Mi"
             cpu: "500m"
           limits:
-            memory: "2Gi"
-            cpu: "1"
+            memory: "1500Mi"
+            cpu: "1000m"
+
+kubectl delete k8ssandracluster k8ssandra -n k8ssandra-operator
+kubectl get pods -n k8ssandra-operator
+kubectl apply -f k8ssandra/k8ssandra.yaml -n k8ssandra-operator
+
+If still issues we need a bigger machine..
+New machine:8 vCPUs, 30 GB Memory
+
+minikube status
+minikube stop
+minikube delete
+minikube start --nodes 3 -p multi-node-k8s --cpus=2.5 --memory=8g
 
 helm repo add jetstack https://charts.jetstack.io
 helm repo update
@@ -254,8 +411,323 @@ helm repo add k8ssandra https://helm.k8ssandra.io/
 helm repo update
 helm install k8ssandra-operator k8ssandra/k8ssandra-operator --namespace k8ssandra-operator --create-namespace
 
-kubectl apply -f k8ssandra.yaml
-kubectl get pods -A
+Modified YAML
+
+apiVersion: k8ssandra.io/v1alpha1
+kind: K8ssandraCluster
+metadata:
+  name: k8ssandra
+  namespace: k8ssandra-operator
+spec:
+  cassandra:
+    serverVersion: "4.0.3"
+    clusterName: dc1
+    datacenters:
+      - metadata:
+          name: dc1
+        size: 3
+        storageConfig:
+          cassandraDataVolumeClaimSpec:
+            storageClassName: standard
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 5Gi   
+        resources:
+          requests:
+            memory: "4Gi"     
+            cpu: "2"          
+          limits:
+            memory: "6Gi"     
+            cpu: "2.5"        
+        config:
+          cassandraYaml:
+            authenticator: PasswordAuthenticator
+            authorizer: CassandraAuthorizer
+          jvmOptions:
+            heapSize: 2G       # larger JVM heap
+            heapNewGenSize: 1G
+
+hdu@cass:~$ kubectl apply -f k8ssandra/k8ssandra.yaml
+k8ssandracluster.k8ssandra.io/k8ssandra created
+
+hdu@cass:~$ kubectl get pods -n k8ssandra-operator
+NAME                                                READY   STATUS     RESTARTS   AGE
+dc1-dc1-default-sts-0                               0/2     Init:0/1   0          19s
+dc1-dc1-default-sts-1                               0/2     Init:0/1   0          18s
+dc1-dc1-default-sts-2                               0/2     Init:0/1   0          18s
+k8ssandra-operator-54cbf544c6-7mx8l                 1/1     Running    0          74s
+k8ssandra-operator-cass-operator-554dc57675-kckll   1/1     Running    0          74s
+
+hdu@cass:~$ kubectl get pods -n k8ssandra-operator -w
+NAME                                                READY   STATUS            RESTARTS   AGE
+dc1-dc1-default-sts-0                               0/2     PodInitializing   0          24s
+dc1-dc1-default-sts-1                               0/2     PodInitializing   0          23s
+dc1-dc1-default-sts-2                               0/2     PodInitializing   0          23s
+k8ssandra-operator-54cbf544c6-7mx8l                 1/1     Running           0          79s
+k8ssandra-operator-cass-operator-554dc57675-kckll   1/1     Running           0          79s
+
+still issues due to internode/pod comunication
+--create a debug pod
+kubectl run -it --rm debug --image=busybox --restart=Never -- sh
+
+--check DNS resolution,if kubernetes resolves pod names correctly
+nslookup dc1-dc1-default-sts-1.dc1.default.svc.cluster.local
+
+--internode port connectivity
+# Test internode communication
+nc -zv dc1-dc1-default-sts-1.dc1.default.svc.cluster.local 7000
+
+# Test JMX
+nc -zv dc1-dc1-default-sts-1.dc1.default.svc.cluster.local 7199
+
+3-node Minikube cluster on a single host, Minikube uses virtual networking inside Docker containers, and sometimes cross-node pod traffic can fail. 
+This is the most common reason your first two Cassandra pods are failing readiness and nodetool can’t connect.
+
+================================
+#3-node Cassandra cluster run on a single-node Minikube
+Override pod anti-affinity rules or Adjust affinity to allow co-location
+
+New machine:8 vCPUs, 30 GB Memory
+minikube delete -p multi-node-k8s
+minikube start --memory=22288 --cpus=6
+
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+
+helm repo add k8ssandra https://helm.k8ssandra.io/
+helm repo update
+helm install k8ssandra-operator k8ssandra/k8ssandra-operator --namespace k8ssandra-operator --create-namespace
+
+--check CRD
+kubectl get deployment k8ssandra-operator -n k8ssandra-operator -o yaml | grep image
+        image: docker.io/k8ssandra/k8ssandra-operator:v1.29.0
+        imagePullPolicy: IfNotPresent
+--check versions supported
+kubectl get crd k8ssandraclusters.k8ssandra.io -o json | jq '.spec.versions[].name'
+"v1alpha1"
+
+--check in helm
+helm list -n k8ssandra-operator
+NAME                    NAMESPACE               REVISION        UPDATED                                 STATUS          CHART                     APP VERSION
+k8ssandra-operator      k8ssandra-operator      1               2025-12-03 04:39:00.370754398 +0000 UTC deployed        k8ssandra-operator-1.29.0 1.29.0 
+
+
+kubectl explain K8ssandraCluster.spec
+kubectl explain K8ssandraCluster.spec.cassandra
+
+apiVersion: k8ssandra.io/v1alpha1
+kind: K8ssandraCluster
+metadata:
+  name: k8ssandra
+  namespace: k8ssandra-operator
+spec:
+  cassandra:
+    serverVersion: "4.0.3"
+    clusterName: dc1
+    datacenters:
+      - metadata:
+          name: dc1
+        size: 3
+        #podAntiAffinity: "none"  # disables anti-affinity (not supported in v1aplha)
+        softPodAntiAffinity: true
+        storageConfig:
+          cassandraDataVolumeClaimSpec:
+            storageClassName: standard
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 4Gi
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2"
+          limits:
+            memory: "6Gi"
+            cpu: "2.5"
+        config:
+          cassandraYaml:
+            authenticator: PasswordAuthenticator
+            authorizer: CassandraAuthorizer
+          jvmOptions:
+            heapSize: 2048M
+            heapNewGenSize: 1024M
+
+kubectl apply -f k8ssandra/k8ssandra.yaml
+kubectl get pods -n k8ssandra-operator
+
+kubectl exec -it dc1-dc1-default-sts-0 -n k8ssandra-operator -- nodetool status
+kubectl exec -it dc1-dc1-default-sts-0 -n k8ssandra-operator -- nodetool info
+
+--------------------------------------------
+#4-Back to multi node/machine, on single host
+modified yaml with properties (can be run on one single node or multi node option where PODS will be scheduled)
+
+apiVersion: k8ssandra.io/v1alpha1
+kind: K8ssandraCluster
+metadata:
+  name: k8ssandra
+  namespace: k8ssandra-operator
+spec:
+  cassandra:
+    serverVersion: "4.0.3"
+    clusterName: dc1
+    datacenters:
+      - metadata:
+          name: dc1
+        size: 3
+        softPodAntiAffinity: true
+        storageConfig:
+          cassandraDataVolumeClaimSpec:
+            storageClassName: standard
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 4Gi
+        resources:
+          requests:
+            memory: "5500Mi"
+            cpu: "800m"
+          limits:
+            memory: "6500Mi"
+            cpu: "1500m"
+        config:
+          cassandraYaml:
+            authenticator: PasswordAuthenticator
+            authorizer: CassandraAuthorizer
+            file_cache_size_in_mb: 64
+            concurrent_reads: 16
+            concurrent_writes: 16
+            memtable_flush_writers: 4
+            compaction_throughput_mb_per_sec: 16
+            hinted_handoff_enabled: false
+            read_request_timeout_in_ms: 5000
+            write_request_timeout_in_ms: 5000
+            trickle_fsync: true
+            trickle_fsync_interval_in_kb: 10240
+          jvmOptions:
+            heapSize: 1280M
+            heapNewGenSize: 788M
+
+Note**
+softPodAntiAffinity: true --tells Kubernetes: schedule Cassandra pods on different nodes if possible, but ok,if it cant.
+hardPodAntiAffinity (via requiredDuringSchedulingIgnoredDuringExecution), which forces pods to be on different nodes and will block 
+scheduling if it’s impossible.
+
+concurrent_compactors: 8
+Determines the number of threads Cassandra uses to compact SSTables in the background. Compaction merges SSTables to free disk space and optimize reads.
+Too few threads → compactions are slow → disk usage grows. Too many → high CPU load.
+Fine for a 2 CPU node; Cassandra will use multiple threads but won’t saturate CPUs in Minikube.
+
+file_cache_size_in_mb: 64
+Amount of memory Cassandra uses to cache SSTable index and filter files.
+Faster reads because metadata for SSTables is cached. Improves query performance.
+(64 MB):
+Small, suitable for Minikube and low-data workloads. You can increase if have more memory.
+
+concurrent_reads: 16
+Maximum number of simultaneous read requests per node.
+Higher value → better throughput under many concurrent queries. Too high → thread contention.
+Decent for dev/local use. Each node can handle 16 reads at the same time.
+
+concurrent_writes: 16
+Maximum number of simultaneous write requests per node.
+Controls write throughput. High writes load CPU and disk.
+Balanced for a Minikube node with 2 CPUs.
+
+memtable_flush_writers: 4
+Number of threads used to flush memtables (in-memory writes) to disk.
+Faster flush → prevents memory pressure. Too many threads → more disk IO.
+Reasonable for 2 CPU cores.
+
+compaction_throughput_mb_per_sec: 16
+Limits the speed of compaction in MB/s per node.
+Prevents compactions from overwhelming disk IO and slowing down reads/writes.
+reduces IO spikes.
+
+hinted_handoff_enabled: false
+When true, Cassandra stores hints for temporarily down nodes and delivers them later.
+In a dev environment, hints are often unnecessary and generate extra disk usage.
+Perfect for local Minikube testing.
+
+read_request_timeout_in_ms: 5000
+Timeout for read operations in milliseconds.
+Prevents long-running reads from hanging the client.
+Good default for local testing.
+
+write_request_timeout_in_ms: 5000
+Timeout for write operations.
+Ensures writes don’t hang forever if something is wrong.
+for dev/testing.
+
+trickle_fsync: true
+Cassandra gradually fsyncs SSTable data to disk instead of all at once.
+Reduces IO spikes, helpful on slow or virtualized disks (like Minikube’s hostPath storage).
+Great for Minikube, prevents high disk usage spikes.
+
+trickle_fsync_interval_in_kb: 10240
+Amount of data (in KB) written before each incremental fsync.
+Controls frequency of fsync calls. Smaller → more frequent, smoother IO; larger → less frequent, faster flush.
+Good compromise for Minikube. Smooths disk writes without being too aggressive.
+
+--check status
+kubectl get pods -n k8ssandra-operator -o json | jq -r '
+.items[] | 
+  .metadata.name as $pod | 
+  (.status.containerStatuses[]? | "\($pod) \(.name) \(.state | keys[0]) \(.ready)")'
+
+--pods to IP mapping
+kubectl get pods -n k8ssandra-operator -o wide
+
+kubectl exec -it dc1-dc1-default-sts-0 -n k8ssandra-operator -- ls var/lib/cassandra/data
+kubectl get secret dc1-superuser -n k8ssandra-operator -o jsonpath="{.data.username}" | base64 --decode && ech
+o
+dc1-superuser
+hdu@cass:~$ kubectl get secret dc1-superuser -n k8ssandra-operator -o jsonpath="{.data.password}" | base64 --decode && ech
+o
+KMzr7WDnIasvXRx1I9ui
+
+kubectl exec -it dc1-dc1-default-sts-0 -n k8ssandra-operator -- \
+cqlsh -u dc1-superuser -p KMzr7WDnIasvXRx1I9ui
+
+CREATE KEYSPACE myks
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+
+use myks;
+
+CREATE TABLE users (
+  id UUID PRIMARY KEY,
+  name text,
+  email text
+        );
+
+INSERT INTO users (id, name, email)
+      VALUES (uuid(), 'Alice', 'alice@example.com');
+
+kubectl exec -it dc1-dc1-default-sts-0 -n k8ssandra-operator -- ls var/lib/cassandra/data/myks/users-ba600170d01511f087adcd7a3950ee5f
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+
+--remember
+Cassandra flushes memtables based on:
+Memtable size threshold
+Time threshold (usually a few minutes)
+Commit log pressure
+
+Manually flushing
+kubectl exec -it dc1-dc1-default-sts-0 -n k8ssandra-operator -- nodetool flush myks
+
+kubectl exec -it dc1-dc1-default-sts-0 -n k8ssandra-operator -- ls var/lib/cassandra/data/myks/users-ba600170d01511f087adcd7a3950ee5f
+backups                      nb-1-big-Digest.crc32  nb-1-big-Statistics.db
+nb-1-big-CompressionInfo.db  nb-1-big-Filter.db     nb-1-big-Summary.db
+nb-1-big-Data.db             nb-1-big-Index.db      nb-1-big-TOC.txt
+
+*.db → actual SSTable data
+*.crc32 → checksum
+*.json → statistics
+
+
+
 
 
 
