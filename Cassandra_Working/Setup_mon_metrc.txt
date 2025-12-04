@@ -1,8 +1,17 @@
+#minikube start --cpus=12 --memory=40g
+
 Prometheus → collects metrics from Cassandra nodes
 Grafana → dashboards to visualize metrics
 Cassandra Exporter → exposes Cassandra metrics to Prometheus
 Reaper → optional, can integrate metrics for repairs
 
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.13.2 --set installCRDs=true
+
+helm repo add k8ssandra https://helm.k8ssandra.io/
+helm repo update
+helm install k8ssandra-operator k8ssandra/k8ssandra-operator --namespace k8ssandra-operator --create-namespace
 
 #Enable Prometheus and Grafana
 K8ssandra automatically configures Cassandra Exporter when monitoring.prometheus.enabled: true.
@@ -14,8 +23,13 @@ Disk usage per table
 Prometheus scrapes these metrics and stores them
 Grafana has prebuilt Cassandra dashboards.
 
-Yaml..
+Modified Yaml..
 
+apiVersion: k8ssandra.io/v1alpha1
+kind: K8ssandraCluster
+metadata:
+  name: k8ssandra
+  namespace: k8ssandra-operator
 spec:
   cassandra:
     serverVersion: "4.0.3"
@@ -25,6 +39,9 @@ spec:
           name: dc1
         size: 3
         softPodAntiAffinity: true
+        telemetry:
+          prometheus:
+            enabled: true
         storageConfig:
           cassandraDataVolumeClaimSpec:
             storageClassName: standard
@@ -34,16 +51,15 @@ spec:
                 storage: 4Gi
         resources:
           requests:
-            memory: "1500Mi"
+            memory: "5500Mi"
             cpu: "800m"
           limits:
-            memory: "2500Mi"
+            memory: "6500Mi"
             cpu: "1500m"
         config:
           cassandraYaml:
             authenticator: PasswordAuthenticator
             authorizer: CassandraAuthorizer
-            concurrent_compactors: 8
             file_cache_size_in_mb: 64
             concurrent_reads: 16
             concurrent_writes: 16
@@ -55,27 +71,332 @@ spec:
             trickle_fsync: true
             trickle_fsync_interval_in_kb: 10240
           jvmOptions:
-            heapSize: 1024M
-            heapNewGenSize: 512M
-  monitoring:
-    prometheus:
-      enabled: true
-      namespace: monitoring
-      service:
-        type: ClusterIP
-    grafana:
-      enabled: true
-      namespace: monitoring
-      service:
-        type: ClusterIP
+            heapSize: 1280M
+            heapNewGenSize: 788M
+
+[Optional in telemetry
+	commonLabels:
+              app: cassandra
+              cassandra.datacenter: dc1]
 
 kubectl apply -f k8ssandra.yml
-kubectl get pods -n monitoring -w
 
-Acces Grafana:
-kubectl port-forward svc/grafana 3000:3000 -n monitoring
+K8ssandra does not include Prometheus or Grafana, so you must install them,via kube-prometheus-stack Helm chart.
+Prometheus Operator
+Prometheus server
+Grafana
+ServiceMonitor CRDs
+Alertmanager
 
-Visit http://localhost:3000
-Default credentials: admin/admin (K8ssandra default)
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace
+
+This will create:
+
+prometheus-operated
+grafana
+alertmanager
+CRDs for ServiceMonitor
+
+----------output----------
+kube-prometheus-stack has been installed. Check its status by running:
+  kubectl --namespace monitoring get pods -l "release=monitoring"
+
+Get Grafana 'admin' user password by running:
+
+  kubectl --namespace monitoring get secrets monitoring-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
+
+Access Grafana local instance:
+
+  export POD_NAME=$(kubectl --namespace monitoring get pod -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=monitoring" -oname)
+  kubectl --namespace monitoring port-forward $POD_NAME 3000
+
+Get your grafana admin user password by running:
+
+  kubectl get secret --namespace monitoring -l app.kubernetes.io/component=admin-secret -o jsonpath="{.items[0].data.admin-password}" | base64 --decode ; echo
+
+Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances 
+using the Operator.
+
+----------output ends--------
+#Check the ServiceMonitor created by K8ssandra
+
+kubectl get pods -n k8sandra-operator
+kubectl get servicemonitor -n k8ssandra-operator
+NAME                          AGE
+dc1-dc1-cass-servicemonitor   73m
+
+kubectl get k8ssandracluster -n k8ssandra-operator k8ssandra -o yaml
+kubectl get crd servicemonitors.monitoring.coreos.com
+
+--check operator logs
+kubectl logs -n k8ssandra-operator deploy/k8ssandra-operator
+
+After ServiceMonitor shows up
+
+Prometheus scraping will begin automatically and Grafana will show Cassandra dashboards.
+You can confirm Prometheus picks up the Cassandra targets:
+kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-stack-prometheus 9090:9090
+
+from cloud machine
+kubectl -n monitoring port-forward svc/monitoring-grafana 3000:80
+kubectl -n monitoring port-forward svc/monitoring-kube-prometheus-prometheus 9090:909
+
+from local machine to access browser
+ssh -i hdupriv.pem -L 3000:localhost:3000 -L 9090:localhost:9090 hdu@34.185.213.19
+
+Now access from browser:
+http://localhost:3000
+http://localhost:9090
+
+Get Grafana pswd from output instructions above..
+
+--------------------------------------------------------------------
+
+#K8ssandra relies on a Prometheus JMX exporter sidecar in Cassandra pods to expose metrics.
+
+kubectl get pods -n k8ssandra-operator -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[*].name}{"\n"}{end}'
+dc1-dc1-default-sts-0   cassandra server-system-logger
+dc1-dc1-default-sts-1   cassandra server-system-logger
+dc1-dc1-default-sts-2   cassandra server-system-logger
+k8ssandra-operator-54cbf544c6-ftfkh     k8ssandra-operator
+k8ssandra-operator-cass-operator-554dc57675-mc7j8       cass-operator
+
+kubectl get servicemonitor dc1-dc1-cass-servicemonitor -n k8ssandra-operator -o yaml
+kubectl get prometheus -n monitoring -o yaml
+
+If output Shows CassandraDatacenter doesnt have side car for JMX exporter
+Option 1
+--scaling down and scaling up (but might not be possible:
+Scale down to 0 replicas
+kubectl patch cassandradatacenter dc1 -n k8ssandra-operator --type='merge' -p '{"spec": {"size": 0}}'
+
+--might throw error message: The CassandraDatacenter "dc1" is invalid: spec.size: Invalid value: 0: spec.size in body should be greater than or equal to 1
+
+--scale back up
+kubectl patch cassandradatacenter dc1 -n k8ssandra-operator --type='merge' -p '{"spec": {"size": 3}}'
+K8ssandra operator will recreate pods with the JMX exporter sidecar for Prometheus.
+
+Verify pods
+
+Option 2
+Rolling restart (less disruptive)
+kubectl rollout restart sts dc1-dc1-default-sts -n k8ssandra-operator
+This will terminate pods one by one and the new pods will include the JMX exporter.
+
+OR
+kubectl -n k8ssandra-operator get pods -l app.kubernetes.io/managed-by=cass-operator
+NAME                    READY   STATUS    RESTARTS      AGE
+dc1-dc1-default-sts-0   1/2     Running   1 (27m ago)   32m
+dc1-dc1-default-sts-1   2/2     Running   0             29m
+dc1-dc1-default-sts-2   1/2     Running   0             17m
+
+then
+kubectl -n k8ssandra-operator port-forward cassandra-dc1-default-sts-0 9103:9103
+
+if still no metrics using curl http://localhost:9103
+
+detailed..but not needed, refer the final one
+vi k8ssandra/cassandra-monitoring.yaml 
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cassandra-jmx-credentials
+  namespace: k8ssandra-operator
+type: Opaque
+stringData:
+  username: cassandra
+  password: cassandra
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cassandra-jmx-config
+  namespace: k8ssandra-operator
+data:
+  jmx.yml: |
+    startDelaySeconds: 0
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    whitelistObjectNames:
+      - "org.apache.cassandra.metrics:*"
+    rules:
+      - pattern: 'org.apache.cassandra.metrics<type=(.+), name=(.+)><>Value:'
+        name: cassandra_$1_$2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cassandra-dc1-metrics
+  namespace: k8ssandra-operator
+  labels:
+    app: cassandra
+    cassandra.datacenter: dc1
+spec:
+  selector:
+    cassandra.datacenter: dc1
+  ports:
+    - name: metrics
+      port: 9103
+      targetPort: 9103
+  type: ClusterIP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cassandra-dc1-servicemonitor
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: cassandra
+      cassandra.datacenter: dc1
+  namespaceSelector:
+    matchNames:
+      - k8ssandra-operator
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+---
+apiVersion: k8ssandra.io/v1alpha1
+kind: K8ssandraCluster
+metadata:
+  name: k8ssandra
+  namespace: k8ssandra-operator
+spec:
+  cassandra:
+    datacenters:
+      - metadata:
+          name: dc1
+        config:
+          additionalVolumes:
+            - name: jmx-config
+              configMap:
+                name: cassandra-jmx-config
+          additionalContainers:
+            - name: jmx-exporter
+              image: prom/jmx-exporter:0.17.2
+              args:
+                - "--config.file=/config/jmx.yml"
+              ports:
+                - containerPort: 9103
+                  name: metrics
+              volumeMounts:
+                - name: jmx-config
+                  mountPath: /config
+
+final & simple
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cassandra-jmx-credentials
+  namespace: k8ssandra-operator
+type: Opaque
+stringData:
+  username: cassandra
+  password: cassandra
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cassandra-jmx-config
+  namespace: k8ssandra-operator
+data:
+  jmx.yml: |
+    startDelaySeconds: 0
+    lowercaseOutputName: true
+    lowercaseOutputLabelNames: true
+    whitelistObjectNames:
+      - "org.apache.cassandra.metrics:*"
+    rules:
+      - pattern: 'org.apache.cassandra.metrics<type=(.+), name=(.+)><>Value:'
+        name: cassandra_$1_$2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cassandra-dc1-metrics
+  namespace: k8ssandra-operator
+  labels:
+    app: cassandra
+    cassandra.datacenter: dc1
+spec:
+  selector:
+    cassandra.datacenter: dc1
+  ports:
+    - name: metrics
+      port: 9103
+      targetPort: 9103
+  type: ClusterIP
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: cassandra-dc1-servicemonitor
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: cassandra
+      cassandra.datacenter: dc1
+  namespaceSelector:
+    matchNames:
+      - k8ssandra-operator
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics
+---
+kubectl apply -f k8ssandra.yml
+kubectl apply -f cassandra-monitoring.yaml
+
+kubectl rollout restart sts dc1-dc1-default-sts -n k8ssandra-operator
+
+kubectl -n k8ssandra-operator port-forward statefulset/dc1-dc1-default-sts 9103:9103
+
+from another terminal
+curl http://localhost:9103/metrics
+
+ kubectl -n monitoring get servicemonitor
+NAME                                                 AGE
+cassandra-dc1-servicemonitor                         21m
+monitoring-grafana                                   3h55m
+monitoring-kube-prometheus-alertmanager              3h55m
+monitoring-kube-prometheus-apiserver                 3h55m
+monitoring-kube-prometheus-coredns                   3h55m
+monitoring-kube-prometheus-kube-controller-manager   3h55m
+monitoring-kube-prometheus-kube-etcd                 3h55m
+monitoring-kube-prometheus-kube-proxy                3h55m
+monitoring-kube-prometheus-kube-scheduler            3h55m
+monitoring-kube-prometheus-kubelet                   3h55m
+monitoring-kube-prometheus-operator                  3h55m
+monitoring-kube-prometheus-prometheus                3h55m
+monitoring-kube-state-metrics                        3h55m
+monitoring-prometheus-node-exporter                  3h55m
+
+In Prometheus → Graph → enter a query, e.g.:
+
+cassandra_clientrequest_read_latency
+cassandra_table_live_sstables
+cassandra_storage_load
+
+in targets search for endpoints..
+
+
+
+
+
+
+
 
 

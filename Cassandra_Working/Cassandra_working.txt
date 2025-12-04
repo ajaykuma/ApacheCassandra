@@ -198,9 +198,30 @@ cqlsh:killrvideo> select * from videos;
  video_id | added_date | title
 ----------+------------+-------
 
+--create a file
+kubectl exec -it dc1-dc1-default-sts-0 -n k8ssandra-operator -- bash
+Defaulted container "cassandra" out of: cassandra, server-system-logger, server-config-init (init)
+cassandra@dc1-dc1-default-sts-0 /]$ cat >> /var/lib/cassandra/videos.csv
+ video_id, added_date, title
+ 245e8024-14bd-11e5-9743-8238356b7e32,2022-04-03 00:00:00.000000+0000,Cassandra & SSDs
+ 3452f7de-14bd-11e5-855e-8738355b7e3a,2023-03-17 00:00:00.000000+0000,Cassandra Intro
+ 5645f8bd-14bd-11e5-af1a-8638355b8e3a,2023-04-16 00:00:00.000000+0000,What is DataStax Enterprise?
+ 1645ea59-14bd-11e5-a993-8138354b7e31,2024-01-29 00:00:00.000000+0000,Cassandra History
+ 4845ed97-14bd-11e5-8a40-8338255b7e33,2023-10-16 00:00:00.000000+0000,DataStax Studi     
+
+cassandra@dc1-dc1-default-sts-0 /]$ cat /var/lib/cassandra/videos.csv 
+ video_id, added_date, title
+ 245e8024-14bd-11e5-9743-8238356b7e32,2022-04-03 00:00:00.000000+0000,Cassandra & SSDs
+ 3452f7de-14bd-11e5-855e-8738355b7e3a,2023-03-17 00:00:00.000000+0000,Cassandra Intro
+ 5645f8bd-14bd-11e5-af1a-8638355b8e3a,2023-04-16 00:00:00.000000+0000,What is DataStax Enterprise?
+ 1645ea59-14bd-11e5-a993-8138354b7e31,2024-01-29 00:00:00.000000+0000,Cassandra History
+ 4845ed97-14bd-11e5-8a40-8338255b7e33,2023-10-16 00:00:00.000000+0000,DataStax Studi
+
+cassandra@dc1-dc1-default-sts-0 /]$ chmod 777 /var/lib/cassandra/videos.csv
+
 cqlsh:killrvideo> COPY videos(video_id, added_date, title)
-              ... FROM '/home/ubuntu/labwork/data-files/videos.csv'
-              ... WITH HEADER=TRUE;
+              FROM '/var/lib/cassandra/videos.csv'
+              WITH HEADER=TRUE;
 Using 1 child processes
 
 Starting copy of killrvideo.videos with columns [video_id, added_date, title].
